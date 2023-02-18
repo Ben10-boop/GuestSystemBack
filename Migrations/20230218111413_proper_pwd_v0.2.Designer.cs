@@ -4,6 +4,7 @@ using GuestSystemBack.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GuestSystemBack.Migrations
 {
     [DbContext(typeof(GuestSystemContext))]
-    partial class GuestSystemContextModelSnapshot : ModelSnapshot
+    [Migration("20230218111413_proper_pwd_v0.2")]
+    partial class properpwdv02
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -106,16 +109,7 @@ namespace GuestSystemBack.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime?>("DepartureTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Email")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("EntranceTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Name")
+                    b.Property<string>("GuestName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -123,8 +117,14 @@ namespace GuestSystemBack.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime>("SubmissionTime")
+                        .HasColumnType("datetime2");
+
                     b.Property<int?>("SubmitterId")
                         .HasColumnType("int");
+
+                    b.Property<DateTime>("VisitEndTime")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("VisitPurpose")
                         .IsRequired()
@@ -133,9 +133,8 @@ namespace GuestSystemBack.Migrations
                     b.Property<int>("VisiteeId")
                         .HasColumnType("int");
 
-                    b.Property<string>("WifiAccessStatus")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<bool>("WasSubmitByAdmin")
+                        .HasColumnType("bit");
 
                     b.HasKey("Id");
 
