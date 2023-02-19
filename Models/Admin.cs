@@ -11,8 +11,6 @@ namespace GuestSystemBack.Models
         public byte[] PasswordHash { get; set; } = null;
         [JsonIgnore]
         public byte[] PasswordSalt { get; set; } = null;
-        public bool IsSuper { get; set; }
-        [JsonIgnore]
-        public ICollection<FormSubmission> FormSubmissions { get; set; } = null;
+        public string Role { get; set; } = "regular"; //regular, super, removed
     }
 }

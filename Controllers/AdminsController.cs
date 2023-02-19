@@ -40,7 +40,7 @@ namespace GuestSystemBack.Controllers
 
             if (admin == null)
             {
-                return NotFound();
+                return NotFound("Admin with given ID does not exist");
             }
 
             return admin;
@@ -52,7 +52,7 @@ namespace GuestSystemBack.Controllers
         public async Task<IActionResult> PatchAdmin(int id, AdminDTO request)
         {
             var oldAdmin = await _context.Admins.FindAsync(id);
-            if (oldAdmin == null) return BadRequest("Can't find the Admin with given ID");
+            if (oldAdmin == null) return NotFound("Admin with given ID does not exist");
 
             /*
             int userID = int.Parse(User.FindFirstValue(ClaimTypes.Name));
@@ -81,7 +81,7 @@ namespace GuestSystemBack.Controllers
         {
             if (_context.Admins == null)
             {
-                return Problem("Entity set 'DataContext.Users'  is null.");
+                return Problem("Entity set 'DataContext.Admins'  is null.");
             }
 
             foreach (Admin user in _context.Admins)
@@ -99,7 +99,7 @@ namespace GuestSystemBack.Controllers
                 Email = request.Email,
                 PasswordHash = passwordHash,
                 PasswordSalt = passwordSalt,
-                IsSuper = false
+                Role = "regular"
             };
             _context.Admins.Add(newAdmin);
             await _context.SaveChangesAsync();
@@ -114,10 +114,9 @@ namespace GuestSystemBack.Controllers
             var admin = await _context.Admins.FindAsync(id);
             if (admin == null)
             {
-                return NotFound();
+                return NotFound("Admin with given ID does not exist");
             }
-
-            _context.Admins.Remove(admin);
+            admin.Role = "removed";
             await _context.SaveChangesAsync();
 
             return NoContent();

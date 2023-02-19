@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using GuestSystemBack.Data;
 using GuestSystemBack.Models;
+using GuestSystemBack.DTOs;
 
 namespace GuestSystemBack.Controllers
 {
@@ -36,7 +37,7 @@ namespace GuestSystemBack.Controllers
 
             if (formSubmission == null)
             {
-                return NotFound();
+                return NotFound("Form submission with given ID does not exist");
             }
 
             return formSubmission;
@@ -44,44 +45,89 @@ namespace GuestSystemBack.Controllers
 
         // PUT: api/FormSubmissions/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutFormSubmission(int id, FormSubmission formSubmission)
+        [HttpPatch("{id}")]
+        public async Task<IActionResult> PatchFormSubmission(int id, FormSubmissionDTO request)
         {
-            if (id != formSubmission.Id)
-            {
-                return BadRequest();
-            }
+            var oldSubmission = await _context.FormSubmissions.FindAsync(id);
+            string errors = "";
+            if (oldSubmission == null) return NotFound("Form submission with given ID does not exist");
 
-            _context.Entry(formSubmission).State = EntityState.Modified;
-
-            try
+            if (request.Name != String.Empty) oldSubmission.Name = request.Name;
+            if (request.Email != String.Empty) oldSubmission.Email = request.Email;
+            if (request.VisitPurpose != String.Empty) oldSubmission.VisitPurpose = request.VisitPurpose;
+            if (request.EntranceTime != null) oldSubmission.EntranceTime = (DateTime)request.EntranceTime;
+            if (request.DepartureTime != null) oldSubmission.DepartureTime = (DateTime)request.DepartureTime;
+            if (request.VisiteeId != -1)
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!FormSubmissionExists(id))
+                var updatedVisitee = await _context.VisitableEmployees.FindAsync(request.VisiteeId);
+                if (updatedVisitee != null)
                 {
-                    return NotFound();
+                    oldSubmission.Visitee = updatedVisitee;
+                    oldSubmission.VisiteeId = updatedVisitee.Id;
                 }
                 else
                 {
-                    throw;
+                    errors += "Failed to update visitee, object with given ID not found";
                 }
             }
+            if (request.WifiAccessStatus == "granted") 
+            {
+                //grant Wifi access
 
-            return NoContent();
+                oldSubmission.WifiAccessStatus = "granted";
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Ok( new{ errors, oldSubmission } );
         }
 
         // POST: api/FormSubmissions
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<FormSubmission>> PostFormSubmission(FormSubmission formSubmission)
+        public async Task<ActionResult<FormSubmission>> PostFormSubmission(FormSubmissionDTO request)
         {
-            _context.FormSubmissions.Add(formSubmission);
+            if (_context.FormSubmissions == null)
+            {
+                return Problem("Entity set 'DataContext.FormSubmissions'  is null.");
+            }
+
+            var submissionVisitee = await _context.VisitableEmployees.FindAsync(request.VisiteeId);
+            if (submissionVisitee == null) return NotFound("Visitee with given ID does not exist");
+
+            if(request.WifiAccessStatus == "granted")
+            {
+                //grant Wifi access
+            }
+
+            FormSubmission newSubmission = new()
+            {
+                Name = request.Name,
+                Email = request.Email,
+                VisitPurpose = request.VisitPurpose,
+                Signature = request.Signature,
+                EntranceTime = request.EntranceTime == null ? (DateTime)request.EntranceTime : DateTime.Now,
+                DepartureTime = request.DepartureTime,
+                VisiteeId = request.VisiteeId,
+                Visitee = submissionVisitee,
+                WifiAccessStatus = request.WifiAccessStatus
+            };
+            _context.FormSubmissions.Add(newSubmission);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetFormSubmission", new { id = formSubmission.Id }, formSubmission);
+            foreach (ExtraDocument doc in _context.ExtraDocuments)
+            {
+                _context.FormDocuments.Add(new()
+                {
+                    FormId = newSubmission.Id,
+                    Form = newSubmission,
+                    DocumentId = doc.Id,
+                    Document = doc
+                });
+            }
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction("GetFormSubmission", new { id = newSubmission.Id }, newSubmission);
         }
 
         // DELETE: api/FormSubmissions/5
@@ -94,15 +140,17 @@ namespace GuestSystemBack.Controllers
                 return NotFound();
             }
 
+            foreach(FormDocument formDoc in _context.FormDocuments)
+            {
+                if(formDoc.FormId == id)
+                {
+                    _context.FormDocuments.Remove(formDoc);
+                }
+            }
             _context.FormSubmissions.Remove(formSubmission);
             await _context.SaveChangesAsync();
 
             return NoContent();
-        }
-
-        private bool FormSubmissionExists(int id)
-        {
-            return _context.FormSubmissions.Any(e => e.Id == id);
         }
     }
 }

@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using GuestSystemBack.Data;
 using GuestSystemBack.Models;
 using Azure.Core;
+using GuestSystemBack.DTOs;
 
 namespace GuestSystemBack.Controllers
 {
@@ -37,7 +38,7 @@ namespace GuestSystemBack.Controllers
 
             if (visitableEmployee == null)
             {
-                return NotFound();
+                return NotFound("Employee with given ID does not exist");
             }
 
             return visitableEmployee;
@@ -46,10 +47,10 @@ namespace GuestSystemBack.Controllers
         // PUT: api/VisitableEmployees/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPatch("{id}")]
-        public async Task<IActionResult> PatchVisitableEmployee(int id, VisitableEmployee request)
+        public async Task<IActionResult> PatchVisitableEmployee(int id, VisitableEmployeeDTO request)
         {
             var oldEmployee = await _context.VisitableEmployees.FindAsync(id);
-            if (oldEmployee == null) return BadRequest("Can't find the Admin with given ID");
+            if (oldEmployee == null) return NotFound("Employee with given ID does not exist");
 
             if (request.Name != String.Empty) oldEmployee.Name = request.Name;
             if (request.Email != String.Empty) oldEmployee.Email = request.Email;
@@ -61,12 +62,29 @@ namespace GuestSystemBack.Controllers
         // POST: api/VisitableEmployees
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<VisitableEmployee>> PostVisitableEmployee(VisitableEmployee visitableEmployee)
+        public async Task<ActionResult<VisitableEmployee>> PostVisitableEmployee(VisitableEmployeeDTO request)
         {
-            _context.VisitableEmployees.Add(visitableEmployee);
+            if (_context.VisitableEmployees == null)
+            {
+                return Problem("Entity set 'DataContext.VisitableEmployees'  is null.");
+            }
+
+            foreach (VisitableEmployee employee in _context.VisitableEmployees)
+            {
+                if (employee.Email == request.Email)
+                {
+                    return BadRequest("Employee with this email already exists");
+                }
+            }
+            VisitableEmployee newEmployee = new()
+            {
+                Name = request.Name,
+                Email = request.Email
+            };
+            _context.VisitableEmployees.Add(newEmployee);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetVisitableEmployee", new { id = visitableEmployee.Id }, visitableEmployee);
+            return CreatedAtAction("GetVisitableEmployee", new { id = newEmployee.Id }, newEmployee);
         }
 
         // DELETE: api/VisitableEmployees/5
@@ -76,18 +94,30 @@ namespace GuestSystemBack.Controllers
             var visitableEmployee = await _context.VisitableEmployees.FindAsync(id);
             if (visitableEmployee == null)
             {
-                return NotFound();
+                return NotFound("Employee with given ID does not exist");
             }
 
-            _context.VisitableEmployees.Remove(visitableEmployee);
+            bool hasBeenVisited = false;
+            foreach(FormSubmission formSub in _context.FormSubmissions)
+            {
+                if (formSub.VisiteeId == id)
+                {
+                    hasBeenVisited = true;
+                    break;
+                }
+            }
+
+            if (hasBeenVisited)
+            {
+                visitableEmployee.Status = "unvisitable";
+            }
+            else
+            {
+                _context.VisitableEmployees.Remove(visitableEmployee);
+            }
             await _context.SaveChangesAsync();
 
             return NoContent();
-        }
-
-        private bool VisitableEmployeeExists(int id)
-        {
-            return _context.VisitableEmployees.Any(e => e.Id == id);
         }
     }
 }

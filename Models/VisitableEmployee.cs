@@ -7,6 +7,7 @@ namespace GuestSystemBack.Models
         public int Id { get; set; }
         public string Name { get; set; } = String.Empty;
         public string Email { get; set; } = String.Empty;
+        public string Status { get; set; } = "visitable"; //visitable, unvisitable
         [JsonIgnore]
         public ICollection<FormSubmission> FormSubmissions { get; set; } = null;
     }
