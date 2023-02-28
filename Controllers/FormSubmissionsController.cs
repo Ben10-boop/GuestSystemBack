@@ -8,6 +8,8 @@ using Microsoft.EntityFrameworkCore;
 using GuestSystemBack.Data;
 using GuestSystemBack.Models;
 using GuestSystemBack.DTOs;
+using Azure.Core;
+using Microsoft.AspNetCore.Authorization;
 
 namespace GuestSystemBack.Controllers
 {
@@ -23,14 +25,14 @@ namespace GuestSystemBack.Controllers
         }
 
         // GET: api/FormSubmissions
-        [HttpGet]
+        [HttpGet, Authorize(Roles = "super, regular")]
         public async Task<ActionResult<IEnumerable<FormSubmission>>> GetFormSubmissions()
         {
             return await _context.FormSubmissions.ToListAsync();
         }
 
         // GET: api/FormSubmissions/5
-        [HttpGet("{id}")]
+        [HttpGet("{id}"), Authorize(Roles = "super, regular")]
         public async Task<ActionResult<FormSubmission>> GetFormSubmission(int id)
         {
             var formSubmission = await _context.FormSubmissions.FindAsync(id);
@@ -45,7 +47,7 @@ namespace GuestSystemBack.Controllers
 
         // PUT: api/FormSubmissions/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPatch("{id}")]
+        [HttpPatch("{id}"), Authorize(Roles = "super, regular")]
         public async Task<IActionResult> PatchFormSubmission(int id, FormSubmissionDTO request)
         {
             var oldSubmission = await _context.FormSubmissions.FindAsync(id);
@@ -82,6 +84,23 @@ namespace GuestSystemBack.Controllers
             return Ok( new{ errors, oldSubmission } );
         }
 
+        [HttpPatch("{id}/EndVisit")]
+        public async Task<IActionResult> UpdateFormSubmissionDepartureTime(int id)
+        {
+            if (_context.FormSubmissions == null)
+            {
+                return Problem("Entity set 'DataContext.FormSubmissions'  is null.");
+            }
+
+            var formSub = await _context.FormSubmissions.FindAsync(id);
+            if (formSub == null) return NotFound("Form submission with given ID does not exist");
+
+            formSub.DepartureTime = DateTime.Now;
+            await _context.SaveChangesAsync();
+
+            return Ok("Departure time updated successfully");
+        }
+
         // POST: api/FormSubmissions
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
@@ -95,9 +114,18 @@ namespace GuestSystemBack.Controllers
             var submissionVisitee = await _context.VisitableEmployees.FindAsync(request.VisiteeId);
             if (submissionVisitee == null) return NotFound("Visitee with given ID does not exist");
 
+            //Send notification email to VisitableEmployee
+
             if(request.WifiAccessStatus == "granted")
             {
+                if(request.Email == null)
+                {
+                    BadRequest("Visit registration failed! Email is required to gain Wifi access");
+                }
+
                 //grant Wifi access
+
+                //Send Wifi credential email to form submitter
             }
 
             FormSubmission newSubmission = new()
@@ -106,7 +134,7 @@ namespace GuestSystemBack.Controllers
                 Email = request.Email,
                 VisitPurpose = request.VisitPurpose,
                 Signature = request.Signature,
-                EntranceTime = request.EntranceTime == null ? (DateTime)request.EntranceTime : DateTime.Now,
+                EntranceTime = request.EntranceTime != null ? (DateTime)request.EntranceTime : DateTime.Now,
                 DepartureTime = request.DepartureTime,
                 VisiteeId = request.VisiteeId,
                 Visitee = submissionVisitee,
@@ -131,7 +159,7 @@ namespace GuestSystemBack.Controllers
         }
 
         // DELETE: api/FormSubmissions/5
-        [HttpDelete("{id}")]
+        [HttpDelete("{id}"), Authorize(Roles = "super")]
         public async Task<IActionResult> DeleteFormSubmission(int id)
         {
             var formSubmission = await _context.FormSubmissions.FindAsync(id);

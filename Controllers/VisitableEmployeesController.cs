@@ -9,6 +9,8 @@ using GuestSystemBack.Data;
 using GuestSystemBack.Models;
 using Azure.Core;
 using GuestSystemBack.DTOs;
+using Microsoft.AspNetCore.Authorization;
+using System.Data;
 
 namespace GuestSystemBack.Controllers
 {
@@ -46,7 +48,7 @@ namespace GuestSystemBack.Controllers
 
         // PUT: api/VisitableEmployees/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPatch("{id}")]
+        [HttpPatch("{id}"), Authorize(Roles = "super, regular")]
         public async Task<IActionResult> PatchVisitableEmployee(int id, VisitableEmployeeDTO request)
         {
             var oldEmployee = await _context.VisitableEmployees.FindAsync(id);
@@ -61,7 +63,7 @@ namespace GuestSystemBack.Controllers
 
         // POST: api/VisitableEmployees
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
+        [HttpPost, Authorize(Roles = "super, regular")]
         public async Task<ActionResult<VisitableEmployee>> PostVisitableEmployee(VisitableEmployeeDTO request)
         {
             if (_context.VisitableEmployees == null)
@@ -88,7 +90,7 @@ namespace GuestSystemBack.Controllers
         }
 
         // DELETE: api/VisitableEmployees/5
-        [HttpDelete("{id}")]
+        [HttpDelete("{id}"), Authorize(Roles = "super, regular")]
         public async Task<IActionResult> DeleteVisitableEmployee(int id)
         {
             var visitableEmployee = await _context.VisitableEmployees.FindAsync(id);

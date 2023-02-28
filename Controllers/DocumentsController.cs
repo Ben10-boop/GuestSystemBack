@@ -8,6 +8,8 @@ using Microsoft.EntityFrameworkCore;
 using GuestSystemBack.Data;
 using GuestSystemBack.Models;
 using GuestSystemBack.DTOs;
+using Microsoft.AspNetCore.Authorization;
+using System.Data;
 
 namespace GuestSystemBack.Controllers
 {
@@ -45,7 +47,7 @@ namespace GuestSystemBack.Controllers
 
         // PUT: api/Documents/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPatch("{id}")]
+        [HttpPatch("{id}"), Authorize(Roles = "super")]
         public async Task<IActionResult> PatchExtraDocument(int id, ExtraDocumentDTO request)
         {
             var oldDocument = await _context.ExtraDocuments.FindAsync(id);
@@ -61,7 +63,7 @@ namespace GuestSystemBack.Controllers
 
         // POST: api/Documents
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
+        [HttpPost, Authorize(Roles = "super")]
         public async Task<ActionResult<ExtraDocument>> PostExtraDocument(ExtraDocumentDTO request)
         {
             if (_context.ExtraDocuments == null)
@@ -82,7 +84,7 @@ namespace GuestSystemBack.Controllers
         }
 
         // DELETE: api/Documents/5
-        [HttpDelete("{id}")]
+        [HttpDelete("{id}"), Authorize(Roles = "super")]
         public async Task<IActionResult> DeleteExtraDocument(int id)
         {
             var extraDocument = await _context.ExtraDocuments.FindAsync(id);

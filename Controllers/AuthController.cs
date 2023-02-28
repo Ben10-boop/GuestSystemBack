@@ -4,6 +4,9 @@ using GuestSystemBack.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Security.Cryptography;
 
 namespace GuestSystemBack.Controllers
@@ -13,9 +16,59 @@ namespace GuestSystemBack.Controllers
     public class AuthController : ControllerBase
     {
         private readonly GuestSystemContext _context;
-        public AuthController(GuestSystemContext context)
+        private readonly IConfiguration _configuration;
+        public AuthController(GuestSystemContext context, IConfiguration configuration)
         {
             _context = context;
+            _configuration = configuration;
+        }
+
+        [HttpPost("login")]
+        public async Task<ActionResult<string>> Login(AdminDTO request)
+        {
+            if (_context.Admins == null) return NotFound("No admins exist");
+
+            Admin foundAdmin = null;
+            foreach (var admin in _context.Admins)
+            {
+                if(admin.Email == request.Email)
+                {
+                    foundAdmin = admin;
+                    break;
+                }
+            }
+            if(foundAdmin == null) return NotFound("Admin with the given email does not exist");
+
+            if (!VerifyPassWordHash(request.Password, foundAdmin.PasswordHash, foundAdmin.PasswordSalt))
+                return BadRequest("Wrong password");
+
+            string token = CreateToken(foundAdmin);
+
+            return Ok(token);
+        }
+
+        private string CreateToken(Admin admin)
+        {
+            List<Claim> claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Email, admin.Email),
+                new Claim(ClaimTypes.Name, $"{admin.Id}"),
+                new Claim(ClaimTypes.Role, admin.Role)
+            };
+
+            var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(
+                _configuration.GetSection("AppSettings:Token").Value));
+
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
+
+            var token = new JwtSecurityToken(
+                claims: claims,
+                expires: DateTime.Now.AddHours(2),
+                signingCredentials: creds
+                );
+
+            var jwt = new JwtSecurityTokenHandler().WriteToken(token);
+            return jwt;
         }
 
         private bool VerifyPassWordHash(string password, byte[] passwordHash, byte[] passwordSalt)

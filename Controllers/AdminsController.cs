@@ -11,10 +11,13 @@ using Azure.Core;
 using GuestSystemBack.DTOs;
 using System.Security.Cryptography;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+using System.Data;
 
 namespace GuestSystemBack.Controllers
 {
     [Route("api/[controller]")]
+    //[Authorize(Roles = "super")]
     [ApiController]
     public class AdminsController : ControllerBase
     {
@@ -26,21 +29,24 @@ namespace GuestSystemBack.Controllers
         }
 
         // GET: api/Admins
-        [HttpGet]
+        [HttpGet, Authorize(Roles = "super")]
         public async Task<ActionResult<IEnumerable<Admin>>> GetAdmins()
         {
             return await _context.Admins.ToListAsync();
         }
 
         // GET: api/Admins/5
-        [HttpGet("{id}")]
+        [HttpGet("{id}"), Authorize(Roles = "super, regular")]
         public async Task<ActionResult<Admin>> GetAdmin(int id)
         {
             var admin = await _context.Admins.FindAsync(id);
 
-            if (admin == null)
+            if (admin == null) return NotFound("Admin with given ID does not exist");
+
+            int userID = int.Parse(User.FindFirstValue(ClaimTypes.Name));
+            if (User.FindFirstValue(ClaimTypes.Role) == "regular" && userID != admin.Id)
             {
-                return NotFound("Admin with given ID does not exist");
+                return BadRequest("You can only view your own account!");
             }
 
             return admin;
@@ -48,21 +54,30 @@ namespace GuestSystemBack.Controllers
 
         // PUT: api/Admins/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPatch("{id}")]
+        [HttpPatch("{id}"), Authorize(Roles = "super, regular")]
         public async Task<IActionResult> PatchAdmin(int id, AdminDTO request)
         {
             var oldAdmin = await _context.Admins.FindAsync(id);
             if (oldAdmin == null) return NotFound("Admin with given ID does not exist");
 
-            /*
             int userID = int.Parse(User.FindFirstValue(ClaimTypes.Name));
-            if (User.FindFirstValue(ClaimTypes.Role) == "Courier" && userID != oldDelivery.DeliveryCourierId)
+            if (User.FindFirstValue(ClaimTypes.Role) == "regular" && userID != oldAdmin.Id)
             {
-                return BadRequest("You can only edit your own deliveries");
-            }*/
+                return BadRequest("You can only edit your own account!");
+            }
 
             if (request.Name != String.Empty) oldAdmin.Name = request.Name;
-            if (request.Email != String.Empty) oldAdmin.Email = request.Email;
+            if (request.Email != String.Empty) 
+            {
+                foreach (Admin user in _context.Admins)
+                {
+                    if (user.Email == request.Email)
+                    {
+                        return BadRequest("User with this email already exists");
+                    }
+                }
+                oldAdmin.Email = request.Email;
+            }
             if (request.Password != String.Empty)
             {
                 CreatePasswordHash(request.Password, out byte[] passwordHash, out byte[] passwordSalt);
@@ -76,7 +91,7 @@ namespace GuestSystemBack.Controllers
 
         // POST: api/Admins
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
+        [HttpPost, Authorize(Roles = "super")]
         public async Task<ActionResult<Admin>> PostAdmin(AdminDTO request)
         {
             if (_context.Admins == null)
@@ -108,7 +123,7 @@ namespace GuestSystemBack.Controllers
         }
 
         // DELETE: api/Admins/5
-        [HttpDelete("{id}")]
+        [HttpDelete("{id}"), Authorize(Roles = "super")]
         public async Task<IActionResult> DeleteAdmin(int id)
         {
             var admin = await _context.Admins.FindAsync(id);
