@@ -10,6 +10,10 @@ using GuestSystemBack.Models;
 using GuestSystemBack.DTOs;
 using Azure.Core;
 using Microsoft.AspNetCore.Authorization;
+using MimeKit;
+using MimeKit.Text;
+using MailKit.Net.Smtp;
+using System.Configuration;
 
 namespace GuestSystemBack.Controllers
 {
@@ -18,10 +22,12 @@ namespace GuestSystemBack.Controllers
     public class FormSubmissionsController : ControllerBase
     {
         private readonly GuestSystemContext _context;
+        private readonly IConfiguration _configuration;
 
-        public FormSubmissionsController(GuestSystemContext context)
+        public FormSubmissionsController(GuestSystemContext context, IConfiguration configuration)
         {
             _context = context;
+            _configuration = configuration;
         }
 
         // GET: api/FormSubmissions
@@ -115,17 +121,26 @@ namespace GuestSystemBack.Controllers
             if (submissionVisitee == null) return NotFound("Visitee with given ID does not exist");
 
             //Send notification email to VisitableEmployee
+            SendEmail(submissionVisitee.Email, "There is a visitor waiting for you!",
+                $"Hello {submissionVisitee.Name},<br> <br> {request.Name} has arrived to the office to visit you!" +
+                " Please come to the office entrance to meet them.<br> <br>" +
+                "Kind regards, <br> Guest entrance system");
 
-            if(request.WifiAccessStatus == "granted")
+            if (request.WifiAccessStatus == "granted")
             {
                 if(request.Email == null)
                 {
-                    BadRequest("Visit registration failed! Email is required to gain Wifi access");
+                    return BadRequest("Visit registration failed! Email is required to gain Wifi access");
                 }
 
                 //grant Wifi access
+                string wifiCredentials = "credentials, yeah.";
 
                 //Send Wifi credential email to form submitter
+                SendEmail(request.Email, "Yuor office guest WiFi credentials",
+                $"Hello {request.Name},<br> <br> Here are your guest wifi network credentials: " +
+                wifiCredentials + "<br> <br>" +
+                "Kind regards, <br> Guest entrance system");
             }
 
             FormSubmission newSubmission = new()
@@ -179,6 +194,24 @@ namespace GuestSystemBack.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+
+        private void SendEmail(string recipientAddress, string emailSubject, string emailBody)
+        {
+            var email = new MimeMessage();
+            email.From.Add(MailboxAddress.Parse("guestservice@something.com"));
+            email.To.Add(MailboxAddress.Parse(recipientAddress));
+            email.Subject = emailSubject;
+            email.Body = new TextPart(TextFormat.Html) { Text = emailBody };
+
+            using var smtp = new SmtpClient();
+            smtp.Connect(_configuration.GetSection("AppSettings:EmailHost").Value,
+                int.Parse(_configuration.GetSection("AppSettings:EmailPort").Value),
+                MailKit.Security.SecureSocketOptions.StartTls);
+            smtp.Authenticate(_configuration.GetSection("AppSettings:EmailUsername").Value,
+                _configuration.GetSection("AppSettings:EmailPassword").Value);
+            smtp.Send(email);
+            smtp.Disconnect(true);
         }
     }
 }
