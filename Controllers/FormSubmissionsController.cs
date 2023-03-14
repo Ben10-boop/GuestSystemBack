@@ -14,6 +14,7 @@ using MimeKit;
 using MimeKit.Text;
 using MailKit.Net.Smtp;
 using System.Configuration;
+using GuestSystemBack.Interfaces;
 
 namespace GuestSystemBack.Controllers
 {
@@ -22,12 +23,12 @@ namespace GuestSystemBack.Controllers
     public class FormSubmissionsController : ControllerBase
     {
         private readonly GuestSystemContext _context;
-        private readonly IConfiguration _configuration;
+        private readonly IEmailService _emailService;
 
-        public FormSubmissionsController(GuestSystemContext context, IConfiguration configuration)
+        public FormSubmissionsController(GuestSystemContext context, IEmailService emailService)
         {
             _context = context;
-            _configuration = configuration;
+            _emailService = emailService;
         }
 
         // GET: api/FormSubmissions
@@ -121,7 +122,7 @@ namespace GuestSystemBack.Controllers
             if (submissionVisitee == null) return NotFound("Visitee with given ID does not exist");
 
             //Send notification email to VisitableEmployee
-            SendEmail(submissionVisitee.Email, "There is a visitor waiting for you!",
+            _emailService.SendEmail(submissionVisitee.Email, "There is a visitor waiting for you!",
                 $"Hello {submissionVisitee.Name},<br> <br> {request.Name} has arrived to the office to visit you!" +
                 " Please come to the office entrance to meet them.<br> <br>" +
                 "Kind regards, <br> Guest entrance system");
@@ -137,7 +138,7 @@ namespace GuestSystemBack.Controllers
                 string wifiCredentials = "credentials, yeah.";
 
                 //Send Wifi credential email to form submitter
-                SendEmail(request.Email, "Yuor office guest WiFi credentials",
+                _emailService.SendEmail(request.Email, "Yuor office guest WiFi credentials",
                 $"Hello {request.Name},<br> <br> Here are your guest wifi network credentials: " +
                 wifiCredentials + "<br> <br>" +
                 "Kind regards, <br> Guest entrance system");
@@ -195,7 +196,7 @@ namespace GuestSystemBack.Controllers
 
             return NoContent();
         }
-
+        /*
         private void SendEmail(string recipientAddress, string emailSubject, string emailBody)
         {
             var email = new MimeMessage();
@@ -212,6 +213,6 @@ namespace GuestSystemBack.Controllers
                 _configuration.GetSection("AppSettings:EmailPassword").Value);
             smtp.Send(email);
             smtp.Disconnect(true);
-        }
+        }*/
     }
 }

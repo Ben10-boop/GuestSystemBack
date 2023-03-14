@@ -10,6 +10,7 @@ using GuestSystemBack.Models;
 using GuestSystemBack.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using System.Data;
+using GuestSystemBack.Interfaces;
 
 namespace GuestSystemBack.Controllers
 {
@@ -17,25 +18,25 @@ namespace GuestSystemBack.Controllers
     [ApiController]
     public class DocumentsController : ControllerBase
     {
-        private readonly GuestSystemContext _context;
+        private readonly IExtraDocumentRepo _documentRepo;
 
-        public DocumentsController(GuestSystemContext context)
+        public DocumentsController(IExtraDocumentRepo repo)
         {
-            _context = context;
+            _documentRepo = repo;
         }
 
         // GET: api/Documents
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ExtraDocument>>> GetExtraDocuments()
         {
-            return await _context.ExtraDocuments.ToListAsync();
+            return await _documentRepo.GetDocuments();
         }
 
         // GET: api/Documents/5
         [HttpGet("{id}")]
         public async Task<ActionResult<ExtraDocument>> GetExtraDocument(int id)
         {
-            var extraDocument = await _context.ExtraDocuments.FindAsync(id);
+            var extraDocument = await _documentRepo.GetDocument(id);
 
             if (extraDocument == null)
             {
@@ -50,13 +51,13 @@ namespace GuestSystemBack.Controllers
         [HttpPatch("{id}"), Authorize(Roles = "super")]
         public async Task<IActionResult> PatchExtraDocument(int id, ExtraDocumentDTO request)
         {
-            var oldDocument = await _context.ExtraDocuments.FindAsync(id);
+            var oldDocument = await _documentRepo.GetDocument(id);
             if (oldDocument == null) return NotFound("Document with given ID does not exist");
 
             if (request.Title != String.Empty) oldDocument.Title = request.Title;
             if (request.Content != String.Empty) oldDocument.Content = request.Content;
             if (request.Status != String.Empty) oldDocument.Status = request.Status;
-            await _context.SaveChangesAsync();
+            await _documentRepo.UpdateDocument(oldDocument);
 
             return Ok(oldDocument);
         }
@@ -66,7 +67,7 @@ namespace GuestSystemBack.Controllers
         [HttpPost, Authorize(Roles = "super")]
         public async Task<ActionResult<ExtraDocument>> PostExtraDocument(ExtraDocumentDTO request)
         {
-            if (_context.ExtraDocuments == null)
+            if (!_documentRepo.DocumentsExist())
             {
                 return Problem("Entity set 'DataContext.ExtraDocuments'  is null.");
             }
@@ -77,8 +78,7 @@ namespace GuestSystemBack.Controllers
                 Content = request.Content,
                 Status = request.Status
             };
-            _context.ExtraDocuments.Add(newDocument);
-            await _context.SaveChangesAsync();
+            await _documentRepo.AddDocument(newDocument);
 
             return CreatedAtAction("GetExtraDocument", new { id = newDocument.Id }, newDocument);
         }
@@ -87,31 +87,18 @@ namespace GuestSystemBack.Controllers
         [HttpDelete("{id}"), Authorize(Roles = "super")]
         public async Task<IActionResult> DeleteExtraDocument(int id)
         {
-            var extraDocument = await _context.ExtraDocuments.FindAsync(id);
+            var extraDocument = await _documentRepo.GetDocument(id);
             if (extraDocument == null)
             {
                 return NotFound("Document with given ID does not exist");
             }
 
-            bool hasBeenSigned = false;
-            foreach (FormDocument formDoc in _context.FormDocuments)
-            {
-                if (formDoc.DocumentId == id)
-                {
-                    hasBeenSigned = true;
-                    break;
-                }
-            }
-
-            if (hasBeenSigned)
+            if (_documentRepo.HasBeenSigned(id))
             {
                 extraDocument.Status = "inactive";
+                return Ok(extraDocument);
             }
-            else
-            {
-                _context.ExtraDocuments.Remove(extraDocument);
-            }
-            await _context.SaveChangesAsync();
+            await _documentRepo.DeleteDocument(extraDocument);
 
             return NoContent();
         }

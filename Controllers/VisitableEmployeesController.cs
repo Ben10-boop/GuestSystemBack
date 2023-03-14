@@ -11,6 +11,7 @@ using Azure.Core;
 using GuestSystemBack.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using System.Data;
+using GuestSystemBack.Interfaces;
 
 namespace GuestSystemBack.Controllers
 {
@@ -18,25 +19,25 @@ namespace GuestSystemBack.Controllers
     [ApiController]
     public class VisitableEmployeesController : ControllerBase
     {
-        private readonly GuestSystemContext _context;
+        private readonly IVisitableEmployeeRepo _employeeRepo;
 
-        public VisitableEmployeesController(GuestSystemContext context)
+        public VisitableEmployeesController(IVisitableEmployeeRepo employeeRepo)
         {
-            _context = context;
+            _employeeRepo = employeeRepo;
         }
 
         // GET: api/VisitableEmployees
         [HttpGet]
         public async Task<ActionResult<IEnumerable<VisitableEmployee>>> GetVisitableEmployees()
         {
-            return await _context.VisitableEmployees.ToListAsync();
+            return await _employeeRepo.GetEmployees();
         }
 
         // GET: api/VisitableEmployees/5
         [HttpGet("{id}")]
         public async Task<ActionResult<VisitableEmployee>> GetVisitableEmployee(int id)
         {
-            var visitableEmployee = await _context.VisitableEmployees.FindAsync(id);
+            var visitableEmployee = await _employeeRepo.GetEmployee(id);
 
             if (visitableEmployee == null)
             {
@@ -51,12 +52,12 @@ namespace GuestSystemBack.Controllers
         [HttpPatch("{id}"), Authorize(Roles = "super, regular")]
         public async Task<IActionResult> PatchVisitableEmployee(int id, VisitableEmployeeDTO request)
         {
-            var oldEmployee = await _context.VisitableEmployees.FindAsync(id);
+            var oldEmployee = await _employeeRepo.GetEmployee(id);
             if (oldEmployee == null) return NotFound("Employee with given ID does not exist");
 
             if (request.Name != String.Empty) oldEmployee.Name = request.Name;
             if (request.Email != String.Empty) oldEmployee.Email = request.Email;
-            await _context.SaveChangesAsync();
+            await _employeeRepo.UpdateEmployee(oldEmployee);
 
             return Ok(oldEmployee);
         }
@@ -66,25 +67,20 @@ namespace GuestSystemBack.Controllers
         [HttpPost, Authorize(Roles = "super, regular")]
         public async Task<ActionResult<VisitableEmployee>> PostVisitableEmployee(VisitableEmployeeDTO request)
         {
-            if (_context.VisitableEmployees == null)
+            if (!_employeeRepo.EmployeesExist())
             {
                 return Problem("Entity set 'DataContext.VisitableEmployees'  is null.");
             }
 
-            foreach (VisitableEmployee employee in _context.VisitableEmployees)
-            {
-                if (employee.Email == request.Email)
-                {
-                    return BadRequest("Employee with this email already exists");
-                }
-            }
+            if(_employeeRepo.EmployeeWithEmailExists(request.Email))
+                return BadRequest("Employee with this email already exists");
+
             VisitableEmployee newEmployee = new()
             {
                 Name = request.Name,
                 Email = request.Email
             };
-            _context.VisitableEmployees.Add(newEmployee);
-            await _context.SaveChangesAsync();
+            await _employeeRepo.AddEmployee(newEmployee);
 
             return CreatedAtAction("GetVisitableEmployee", new { id = newEmployee.Id }, newEmployee);
         }
@@ -93,32 +89,20 @@ namespace GuestSystemBack.Controllers
         [HttpDelete("{id}"), Authorize(Roles = "super, regular")]
         public async Task<IActionResult> DeleteVisitableEmployee(int id)
         {
-            var visitableEmployee = await _context.VisitableEmployees.FindAsync(id);
+            var visitableEmployee = await _employeeRepo.GetEmployee(id);
             if (visitableEmployee == null)
             {
                 return NotFound("Employee with given ID does not exist");
             }
 
-            bool hasBeenVisited = false;
-            foreach(FormSubmission formSub in _context.FormSubmissions)
-            {
-                if (formSub.VisiteeId == id)
-                {
-                    hasBeenVisited = true;
-                    break;
-                }
-            }
-
-            if (hasBeenVisited)
+            if (_employeeRepo.EmployeeHasBeenVisited(id))
             {
                 visitableEmployee.Status = "unvisitable";
+                await _employeeRepo.UpdateEmployee(visitableEmployee);
+                return Ok(visitableEmployee);
             }
-            else
-            {
-                _context.VisitableEmployees.Remove(visitableEmployee);
-            }
-            await _context.SaveChangesAsync();
 
+            await _employeeRepo.DeleteEmployee(visitableEmployee);
             return NoContent();
         }
     }

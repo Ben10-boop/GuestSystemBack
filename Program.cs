@@ -1,4 +1,7 @@
 using GuestSystemBack.Data;
+using GuestSystemBack.Interfaces;
+using GuestSystemBack.Repositories;
+using GuestSystemBack.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -16,6 +19,10 @@ builder.Services.AddDbContext<GuestSystemContext>(options =>
 });
 
 builder.Services.AddControllers();
+builder.Services.AddScoped<IVisitableEmployeeRepo, VisitableEmployeeRepo>();
+builder.Services.AddScoped<IFormSubmissionRepo, FormSubmissionRepo>();
+builder.Services.AddScoped<IExtraDocumentRepo, ExtraDocumentRepo>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
