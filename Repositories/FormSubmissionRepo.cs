@@ -46,5 +46,32 @@ namespace GuestSystemBack.Repositories
             _context.Update(formSub);
             return _context.SaveChangesAsync();
         }
+
+        public Task<int> AddDocumentsToForm(FormSubmission formSub)
+        {
+            foreach (ExtraDocument doc in _context.ExtraDocuments)
+            {
+                _context.FormDocuments.Add(new()
+                {
+                    FormId = formSub.Id,
+                    Form = formSub,
+                    DocumentId = doc.Id,
+                    Document = doc
+                });
+            }
+            return _context.SaveChangesAsync();
+        }
+
+        public Task<int> RemoveDocumentsFromForm(int formSubId)
+        {
+            foreach (FormDocument formDoc in _context.FormDocuments)
+            {
+                if (formDoc.FormId == formSubId)
+                {
+                    _context.FormDocuments.Remove(formDoc);
+                }
+            }
+            return _context.SaveChangesAsync();
+        }
     }
 }

@@ -37,9 +37,9 @@ namespace GuestSystemBackTests.Controllers
         public async void VisitableEmployeeController_GetVisitableEmployees_ReturnEmployees()
         {
             //Arrange
-            var employeesMock = _fixture.Create<List<VisitableEmployee>>();
+            var objectsMock = _fixture.Create<List<VisitableEmployee>>();
 
-            _repoMock.Setup(x => x.GetEmployees()).ReturnsAsync(employeesMock);
+            _repoMock.Setup(x => x.GetEmployees()).ReturnsAsync(objectsMock);
 
             //Act
             var result = await _controller.GetVisitableEmployees().ConfigureAwait(false);
@@ -47,16 +47,16 @@ namespace GuestSystemBackTests.Controllers
             //Asssert
             result.Should().NotBeNull();
             result.Should().BeOfType(typeof(ActionResult<IEnumerable<VisitableEmployee>>));
-            result.Value.Should().BeSameAs(employeesMock);
+            result.Value.Should().BeSameAs(objectsMock);
         }
 
         [Fact]
         public async void VisitableEmployeeController_GetVisitableEmployee_ReturnEmployee()
         {
             //Arrange
-            var employeeMock = _fixture.Create<VisitableEmployee>();
+            var objectMock = _fixture.Create<VisitableEmployee>();
 
-            _repoMock.Setup(x => x.GetEmployee(1)).ReturnsAsync(employeeMock);
+            _repoMock.Setup(x => x.GetEmployee(1)).ReturnsAsync(objectMock);
 
             //Act
             var result = await _controller.GetVisitableEmployee(1).ConfigureAwait(false);
@@ -64,14 +64,14 @@ namespace GuestSystemBackTests.Controllers
             //Asssert
             result.Should().NotBeNull();
             result.Should().BeOfType(typeof(ActionResult<VisitableEmployee>));
-            result.Value.Should().BeSameAs(employeeMock);
+            result.Value.Should().BeSameAs(objectMock);
         }
 
         [Fact]
         public async void VisitableEmployeeController_GetVisitableEmployee_ReturnNotFound()
         {
             //Arrange
-            VisitableEmployee employeeMock = _fixture.Create<VisitableEmployee>();
+            VisitableEmployee objectMock = _fixture.Create<VisitableEmployee>();
 
             _repoMock.Setup(x => x.GetEmployee(1)).ReturnsAsync((VisitableEmployee?)null);
 
@@ -87,12 +87,12 @@ namespace GuestSystemBackTests.Controllers
         public async void VisitableEmployeeController_PatchVisitableEmployee_ReturnEmployee()
         {
             //Arrange
-            var employeeMock = _fixture.Create<VisitableEmployee>();
+            var objectMock = _fixture.Create<VisitableEmployee>();
             var updateDtoMock = _fixture.Create<VisitableEmployeeDTO>();
             var responseMock = _fixture.Create<int>();
 
-            _repoMock.Setup(x => x.GetEmployee(1)).ReturnsAsync(employeeMock);
-            _repoMock.Setup(x => x.UpdateEmployee(employeeMock)).ReturnsAsync(responseMock);
+            _repoMock.Setup(x => x.GetEmployee(1)).ReturnsAsync(objectMock);
+            _repoMock.Setup(x => x.UpdateEmployee(objectMock)).ReturnsAsync(responseMock);
 
             //Act
             var result = await _controller.PatchVisitableEmployee(1, updateDtoMock).ConfigureAwait(false);
@@ -105,12 +105,12 @@ namespace GuestSystemBackTests.Controllers
         public async void VisitableEmployeeController_PatchVisitableEmployee_ReturnNotFound()
         {
             //Arrange
-            VisitableEmployee employeeMock = _fixture.Create<VisitableEmployee>();
+            VisitableEmployee objectMock = _fixture.Create<VisitableEmployee>();
             var updateDtoMock = _fixture.Create<VisitableEmployeeDTO>();
             var responseMock = _fixture.Create<int>();
 
             _repoMock.Setup(x => x.GetEmployee(1)).ReturnsAsync((VisitableEmployee?)null);
-            _repoMock.Setup(x => x.UpdateEmployee(employeeMock)).ReturnsAsync(responseMock);
+            _repoMock.Setup(x => x.UpdateEmployee(objectMock)).ReturnsAsync(responseMock);
 
             //Act
             var result = await _controller.PatchVisitableEmployee(1, updateDtoMock).ConfigureAwait(false);
@@ -123,15 +123,15 @@ namespace GuestSystemBackTests.Controllers
         public async void VisitableEmployeeController_PostVisitableEmployee_ReturnCreatedAtAction()
         {
             //Arrange
-            var employeeMock = _fixture.Create<VisitableEmployeeDTO>();
+            var objectMock = _fixture.Create<VisitableEmployeeDTO>();
             var responseMock = _fixture.Create<int>();
 
             _repoMock.Setup(x => x.EmployeesExist()).Returns(true);
-            _repoMock.Setup(x => x.EmployeeWithEmailExists(employeeMock.Email)).Returns(false);
+            _repoMock.Setup(x => x.EmployeeWithEmailExists(objectMock.Email)).Returns(false);
             _repoMock.Setup(x => x.AddEmployee(It.IsAny<VisitableEmployee>())).ReturnsAsync(responseMock);
 
             //Act
-            var result = await _controller.PostVisitableEmployee(employeeMock).ConfigureAwait(false);
+            var result = await _controller.PostVisitableEmployee(objectMock).ConfigureAwait(false);
 
             //Asssert
             result.Should().NotBeNull();
@@ -141,15 +141,15 @@ namespace GuestSystemBackTests.Controllers
         public async void VisitableEmployeeController_PostVisitableEmployee_ReturnProblem()
         {
             //Arrange
-            var employeeMock = _fixture.Create<VisitableEmployeeDTO>();
+            var objectMock = _fixture.Create<VisitableEmployeeDTO>();
             var responseMock = _fixture.Create<int>();
 
             _repoMock.Setup(x => x.EmployeesExist()).Returns(false);
-            _repoMock.Setup(x => x.EmployeeWithEmailExists(employeeMock.Email)).Returns(false);
+            _repoMock.Setup(x => x.EmployeeWithEmailExists(objectMock.Email)).Returns(false);
             _repoMock.Setup(x => x.AddEmployee(It.IsAny<VisitableEmployee>())).ReturnsAsync(responseMock);
 
             //Act
-            var result = await _controller.PostVisitableEmployee(employeeMock).ConfigureAwait(false);
+            var result = await _controller.PostVisitableEmployee(objectMock).ConfigureAwait(false);
 
             //Asssert
             result.Should().NotBeNull();
@@ -159,15 +159,15 @@ namespace GuestSystemBackTests.Controllers
         public async void VisitableEmployeeController_PostVisitableEmployee_ReturnBadRequest()
         {
             //Arrange
-            var employeeMock = _fixture.Create<VisitableEmployeeDTO>();
+            var objectMock = _fixture.Create<VisitableEmployeeDTO>();
             var responseMock = _fixture.Create<int>();
 
             _repoMock.Setup(x => x.EmployeesExist()).Returns(true);
-            _repoMock.Setup(x => x.EmployeeWithEmailExists(employeeMock.Email)).Returns(true);
+            _repoMock.Setup(x => x.EmployeeWithEmailExists(objectMock.Email)).Returns(true);
             _repoMock.Setup(x => x.AddEmployee(It.IsAny<VisitableEmployee>())).ReturnsAsync(responseMock);
 
             //Act
-            var result = await _controller.PostVisitableEmployee(employeeMock).ConfigureAwait(false);
+            var result = await _controller.PostVisitableEmployee(objectMock).ConfigureAwait(false);
 
             //Asssert
             result.Should().NotBeNull();
@@ -178,12 +178,12 @@ namespace GuestSystemBackTests.Controllers
         public async void VisitableEmployeeController_DeleteVisitableEmployee_ReturnNoContent()
         {
             //Arrange
-            var employeeMock = _fixture.Create<VisitableEmployee>();
+            var objectMock = _fixture.Create<VisitableEmployee>();
             var responseMock = _fixture.Create<int>();
 
-            _repoMock.Setup(x => x.GetEmployee(1)).ReturnsAsync(employeeMock);
+            _repoMock.Setup(x => x.GetEmployee(1)).ReturnsAsync(objectMock);
             _repoMock.Setup(x => x.EmployeeHasBeenVisited(1)).Returns(false);
-            _repoMock.Setup(x => x.DeleteEmployee(employeeMock)).ReturnsAsync(responseMock);
+            _repoMock.Setup(x => x.DeleteEmployee(objectMock)).ReturnsAsync(responseMock);
 
             //Act
             var result = await _controller.DeleteVisitableEmployee(1).ConfigureAwait(false);
@@ -196,12 +196,12 @@ namespace GuestSystemBackTests.Controllers
         public async void VisitableEmployeeController_DeleteVisitableEmployee_ReturnNotFound()
         {
             //Arrange
-            var employeeMock = _fixture.Create<VisitableEmployee>();
+            var objectMock = _fixture.Create<VisitableEmployee>();
             var responseMock = _fixture.Create<int>();
 
             _repoMock.Setup(x => x.GetEmployee(1)).ReturnsAsync((VisitableEmployee?)null);
             _repoMock.Setup(x => x.EmployeeHasBeenVisited(1)).Returns(false);
-            _repoMock.Setup(x => x.DeleteEmployee(employeeMock)).ReturnsAsync(responseMock);
+            _repoMock.Setup(x => x.DeleteEmployee(objectMock)).ReturnsAsync(responseMock);
 
             //Act
             var result = await _controller.DeleteVisitableEmployee(1).ConfigureAwait(false);
@@ -214,12 +214,12 @@ namespace GuestSystemBackTests.Controllers
         public async void VisitableEmployeeController_DeleteVisitableEmployee_ReturnOk()
         {
             //Arrange
-            var employeeMock = _fixture.Create<VisitableEmployee>();
+            var objectMock = _fixture.Create<VisitableEmployee>();
             var responseMock = _fixture.Create<int>();
 
-            _repoMock.Setup(x => x.GetEmployee(1)).ReturnsAsync(employeeMock);
+            _repoMock.Setup(x => x.GetEmployee(1)).ReturnsAsync(objectMock);
             _repoMock.Setup(x => x.EmployeeHasBeenVisited(1)).Returns(true);
-            _repoMock.Setup(x => x.DeleteEmployee(employeeMock)).ReturnsAsync(responseMock);
+            _repoMock.Setup(x => x.DeleteEmployee(objectMock)).ReturnsAsync(responseMock);
 
             //Act
             var result = await _controller.DeleteVisitableEmployee(1).ConfigureAwait(false);

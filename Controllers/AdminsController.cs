@@ -13,6 +13,7 @@ using System.Security.Cryptography;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using System.Data;
+using GuestSystemBack.Interfaces;
 
 namespace GuestSystemBack.Controllers
 {
@@ -21,30 +22,31 @@ namespace GuestSystemBack.Controllers
     [ApiController]
     public class AdminsController : ControllerBase
     {
-        private readonly GuestSystemContext _context;
+        private readonly IAdminRepo _adminRepo;
+        private readonly IUserService _userService;
 
-        public AdminsController(GuestSystemContext context)
+        public AdminsController(IAdminRepo repo, IUserService userService)
         {
-            _context = context;
+            _adminRepo = repo;
+            _userService = userService;
         }
 
         // GET: api/Admins
         [HttpGet, Authorize(Roles = "super")]
         public async Task<ActionResult<IEnumerable<Admin>>> GetAdmins()
         {
-            return await _context.Admins.ToListAsync();
+            return await _adminRepo.GetAdmins();
         }
 
         // GET: api/Admins/5
         [HttpGet("{id}"), Authorize(Roles = "super, regular")]
         public async Task<ActionResult<Admin>> GetAdmin(int id)
         {
-            var admin = await _context.Admins.FindAsync(id);
+            var admin = await _adminRepo.GetAdmin(id);
 
             if (admin == null) return NotFound("Admin with given ID does not exist");
 
-            int userID = int.Parse(User.FindFirstValue(ClaimTypes.Name));
-            if (User.FindFirstValue(ClaimTypes.Role) == "regular" && userID != admin.Id)
+            if (_userService.GetUserRole() == "regular" && _userService.GetUserId() != admin.Id)
             {
                 return BadRequest("You can only view your own account!");
             }
@@ -57,34 +59,36 @@ namespace GuestSystemBack.Controllers
         [HttpPatch("{id}"), Authorize(Roles = "super, regular")]
         public async Task<IActionResult> PatchAdmin(int id, AdminDTO request)
         {
-            var oldAdmin = await _context.Admins.FindAsync(id);
+            var oldAdmin = await _adminRepo.GetAdmin(id);
             if (oldAdmin == null) return NotFound("Admin with given ID does not exist");
 
-            int userID = int.Parse(User.FindFirstValue(ClaimTypes.Name));
-            if (User.FindFirstValue(ClaimTypes.Role) == "regular" && userID != oldAdmin.Id)
+            if (_userService.GetUserRole() == "regular" && _userService.GetUserId() != oldAdmin.Id)
             {
                 return BadRequest("You can only edit your own account!");
             }
 
-            if (request.Name != String.Empty) oldAdmin.Name = request.Name;
-            if (request.Email != String.Empty) 
+            //super admin can change all parameters
+            if (_userService.GetUserRole() == "super")
             {
-                foreach (Admin user in _context.Admins)
+                if (request.Name != String.Empty) oldAdmin.Name = request.Name;
+                if (request.Email != String.Empty)
                 {
-                    if (user.Email == request.Email)
+                    if (_adminRepo.AdminWithEmailExists(request.Email))
                     {
                         return BadRequest("User with this email already exists");
                     }
+                    oldAdmin.Email = request.Email;
                 }
-                oldAdmin.Email = request.Email;
             }
+
+            //regular admin can only change their own password
             if (request.Password != String.Empty)
             {
                 CreatePasswordHash(request.Password, out byte[] passwordHash, out byte[] passwordSalt);
                 oldAdmin.PasswordHash = passwordHash;
                 oldAdmin.PasswordSalt = passwordSalt;
             }
-            await _context.SaveChangesAsync();
+            await _adminRepo.UpdateAdmin(oldAdmin);
 
             return Ok(oldAdmin);
         }
@@ -94,17 +98,14 @@ namespace GuestSystemBack.Controllers
         [HttpPost, Authorize(Roles = "super")]
         public async Task<ActionResult<Admin>> PostAdmin(AdminDTO request)
         {
-            if (_context.Admins == null)
+            if (!_adminRepo.AdminsExist())
             {
                 return Problem("Entity set 'DataContext.Admins'  is null.");
             }
 
-            foreach (Admin user in _context.Admins)
+            if (_adminRepo.AdminWithEmailExists(request.Email))
             {
-                if (user.Email == request.Email)
-                {
-                    return BadRequest("User with this email already exists");
-                }
+                return BadRequest("User with this email already exists");
             }
 
             CreatePasswordHash(request.Password, out byte[] passwordHash, out byte[] passwordSalt);
@@ -116,8 +117,7 @@ namespace GuestSystemBack.Controllers
                 PasswordSalt = passwordSalt,
                 Role = "regular"
             };
-            _context.Admins.Add(newAdmin);
-            await _context.SaveChangesAsync();
+            await _adminRepo.AddAdmin(newAdmin);
 
             return CreatedAtAction("GetAdmin", new { id = newAdmin.Id }, newAdmin);
         }
@@ -126,18 +126,18 @@ namespace GuestSystemBack.Controllers
         [HttpDelete("{id}"), Authorize(Roles = "super")]
         public async Task<IActionResult> DeleteAdmin(int id)
         {
-            var admin = await _context.Admins.FindAsync(id);
+            var admin = await _adminRepo.GetAdmin(id);
             if (admin == null)
             {
                 return NotFound("Admin with given ID does not exist");
             }
             admin.Role = "removed";
-            await _context.SaveChangesAsync();
+            await _adminRepo.UpdateAdmin(admin);
 
-            return NoContent();
+            return Ok(admin);
         }
 
-        private void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
+        private static void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
         {
             using (var hmac = new HMACSHA512())
             {

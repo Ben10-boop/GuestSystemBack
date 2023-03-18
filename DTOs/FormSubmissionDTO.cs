@@ -1,8 +1,9 @@
 ﻿using GuestSystemBack.Models;
+using System.ComponentModel.DataAnnotations;
 
 namespace GuestSystemBack.DTOs
 {
-    public class FormSubmissionDTO
+    public class FormSubmissionDTO : IValidatableObject
     {
         public string Name { get; set; } = String.Empty;
         public string? Email { get; set; }
@@ -13,5 +14,13 @@ namespace GuestSystemBack.DTOs
 
         public int VisiteeId { get; set; } = -1;
         public string WifiAccessStatus { get; set; } = "not requested"; //"not requested"; "granted";
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (WifiAccessStatus != "not requested" && WifiAccessStatus != "granted")
+            {
+                yield return new ValidationResult($"Value:'{WifiAccessStatus}' for WifiAccessStatus is not allowed.");
+            }
+        }
     }
 }

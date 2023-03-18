@@ -48,9 +48,9 @@ namespace GuestSystemBackTests.Controllers
         public async void DocumentsController_GetDocument_ReturnDocument()
         {
             //Arrange
-            var employeeMock = _fixture.Create<ExtraDocument>();
+            var objectMock = _fixture.Create<ExtraDocument>();
 
-            _repoMock.Setup(x => x.GetDocument(1)).ReturnsAsync(employeeMock);
+            _repoMock.Setup(x => x.GetDocument(1)).ReturnsAsync(objectMock);
 
             //Act
             var result = await _controller.GetExtraDocument(1).ConfigureAwait(false);
@@ -58,14 +58,14 @@ namespace GuestSystemBackTests.Controllers
             //Asssert
             result.Should().NotBeNull();
             result.Should().BeOfType(typeof(ActionResult<ExtraDocument>));
-            result.Value.Should().BeSameAs(employeeMock);
+            result.Value.Should().BeSameAs(objectMock);
         }
 
         [Fact]
         public async void DocumentsController_GetDocument_ReturnNotFound()
         {
             //Arrange
-            ExtraDocument employeeMock = _fixture.Create<ExtraDocument>();
+            ExtraDocument objectMock = _fixture.Create<ExtraDocument>();
 
             _repoMock.Setup(x => x.GetDocument(1)).ReturnsAsync((ExtraDocument?)null);
 
@@ -80,12 +80,12 @@ namespace GuestSystemBackTests.Controllers
         public async void DocumentsController_PatchDocument_ReturnDocument()
         {
             //Arrange
-            var employeeMock = _fixture.Create<ExtraDocument>();
+            var objectMock = _fixture.Create<ExtraDocument>();
             var updateDtoMock = _fixture.Create<ExtraDocumentDTO>();
             var responseMock = _fixture.Create<int>();
 
-            _repoMock.Setup(x => x.GetDocument(1)).ReturnsAsync(employeeMock);
-            _repoMock.Setup(x => x.UpdateDocument(employeeMock)).ReturnsAsync(responseMock);
+            _repoMock.Setup(x => x.GetDocument(1)).ReturnsAsync(objectMock);
+            _repoMock.Setup(x => x.UpdateDocument(objectMock)).ReturnsAsync(responseMock);
 
             //Act
             var result = await _controller.PatchExtraDocument(1, updateDtoMock).ConfigureAwait(false);
@@ -98,12 +98,12 @@ namespace GuestSystemBackTests.Controllers
         public async void DocumentsController_PatchDocument_ReturnNotFound()
         {
             //Arrange
-            ExtraDocument employeeMock = _fixture.Create<ExtraDocument>();
+            ExtraDocument objectMock = _fixture.Create<ExtraDocument>();
             var updateDtoMock = _fixture.Create<ExtraDocumentDTO>();
             var responseMock = _fixture.Create<int>();
 
             _repoMock.Setup(x => x.GetDocument(1)).ReturnsAsync((ExtraDocument?)null);
-            _repoMock.Setup(x => x.UpdateDocument(employeeMock)).ReturnsAsync(responseMock);
+            _repoMock.Setup(x => x.UpdateDocument(objectMock)).ReturnsAsync(responseMock);
 
             //Act
             var result = await _controller.PatchExtraDocument(1, updateDtoMock).ConfigureAwait(false);
@@ -116,14 +116,14 @@ namespace GuestSystemBackTests.Controllers
         public async void DocumentsController_PostDocument_ReturnCreatedAtAction()
         {
             //Arrange
-            var employeeMock = _fixture.Create<ExtraDocumentDTO>();
+            var objectMock = _fixture.Create<ExtraDocumentDTO>();
             var responseMock = _fixture.Create<int>();
 
             _repoMock.Setup(x => x.DocumentsExist()).Returns(true);
             _repoMock.Setup(x => x.AddDocument(It.IsAny<ExtraDocument>())).ReturnsAsync(responseMock);
 
             //Act
-            var result = await _controller.PostExtraDocument(employeeMock).ConfigureAwait(false);
+            var result = await _controller.PostExtraDocument(objectMock).ConfigureAwait(false);
 
             //Asssert
             result.Should().NotBeNull();
@@ -133,14 +133,14 @@ namespace GuestSystemBackTests.Controllers
         public async void DocumentsController_PostDocument_ReturnProblem()
         {
             //Arrange
-            var employeeMock = _fixture.Create<ExtraDocumentDTO>();
+            var objectMock = _fixture.Create<ExtraDocumentDTO>();
             var responseMock = _fixture.Create<int>();
 
             _repoMock.Setup(x => x.DocumentsExist()).Returns(false);
             _repoMock.Setup(x => x.AddDocument(It.IsAny<ExtraDocument>())).ReturnsAsync(responseMock);
 
             //Act
-            var result = await _controller.PostExtraDocument(employeeMock).ConfigureAwait(false);
+            var result = await _controller.PostExtraDocument(objectMock).ConfigureAwait(false);
 
             //Asssert
             result.Should().NotBeNull();
@@ -150,12 +150,12 @@ namespace GuestSystemBackTests.Controllers
         public async void DocumentsController_DeleteDocument_ReturnNoContent()
         {
             //Arrange
-            var employeeMock = _fixture.Create<ExtraDocument>();
+            var objectMock = _fixture.Create<ExtraDocument>();
             var responseMock = _fixture.Create<int>();
 
-            _repoMock.Setup(x => x.GetDocument(1)).ReturnsAsync(employeeMock);
+            _repoMock.Setup(x => x.GetDocument(1)).ReturnsAsync(objectMock);
             _repoMock.Setup(x => x.HasBeenSigned(1)).Returns(false);
-            _repoMock.Setup(x => x.DeleteDocument(employeeMock)).ReturnsAsync(responseMock);
+            _repoMock.Setup(x => x.DeleteDocument(objectMock)).ReturnsAsync(responseMock);
 
             //Act
             var result = await _controller.DeleteExtraDocument(1).ConfigureAwait(false);
@@ -168,12 +168,12 @@ namespace GuestSystemBackTests.Controllers
         public async void DocumentsController_DeleteDocument_ReturnNotFound()
         {
             //Arrange
-            var employeeMock = _fixture.Create<ExtraDocument>();
+            var objectMock = _fixture.Create<ExtraDocument>();
             var responseMock = _fixture.Create<int>();
 
             _repoMock.Setup(x => x.GetDocument(1)).ReturnsAsync((ExtraDocument?)null);
             _repoMock.Setup(x => x.HasBeenSigned(1)).Returns(false);
-            _repoMock.Setup(x => x.DeleteDocument(employeeMock)).ReturnsAsync(responseMock);
+            _repoMock.Setup(x => x.DeleteDocument(objectMock)).ReturnsAsync(responseMock);
 
             //Act
             var result = await _controller.DeleteExtraDocument(1).ConfigureAwait(false);
@@ -186,12 +186,12 @@ namespace GuestSystemBackTests.Controllers
         public async void DocumentsController_DeleteDocument_ReturnOk()
         {
             //Arrange
-            var employeeMock = _fixture.Create<ExtraDocument>();
+            var objectMock = _fixture.Create<ExtraDocument>();
             var responseMock = _fixture.Create<int>();
 
-            _repoMock.Setup(x => x.GetDocument(1)).ReturnsAsync(employeeMock);
+            _repoMock.Setup(x => x.GetDocument(1)).ReturnsAsync(objectMock);
             _repoMock.Setup(x => x.HasBeenSigned(1)).Returns(true);
-            _repoMock.Setup(x => x.DeleteDocument(employeeMock)).ReturnsAsync(responseMock);
+            _repoMock.Setup(x => x.DeleteDocument(objectMock)).ReturnsAsync(responseMock);
 
             //Act
             var result = await _controller.DeleteExtraDocument(1).ConfigureAwait(false);

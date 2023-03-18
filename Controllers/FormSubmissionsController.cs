@@ -22,27 +22,30 @@ namespace GuestSystemBack.Controllers
     [ApiController]
     public class FormSubmissionsController : ControllerBase
     {
-        private readonly GuestSystemContext _context;
+        private readonly IFormSubmissionRepo _formSubRepo;
+        private readonly IVisitableEmployeeRepo _employeeRepo;
         private readonly IEmailService _emailService;
 
-        public FormSubmissionsController(GuestSystemContext context, IEmailService emailService)
+        public FormSubmissionsController(IEmailService emailService,
+            IFormSubmissionRepo formSubRepo, IVisitableEmployeeRepo employeeRepo)
         {
-            _context = context;
             _emailService = emailService;
+            _formSubRepo = formSubRepo;
+            _employeeRepo = employeeRepo;
         }
 
         // GET: api/FormSubmissions
         [HttpGet, Authorize(Roles = "super, regular")]
         public async Task<ActionResult<IEnumerable<FormSubmission>>> GetFormSubmissions()
         {
-            return await _context.FormSubmissions.ToListAsync();
+            return await _formSubRepo.GetForms();
         }
 
         // GET: api/FormSubmissions/5
         [HttpGet("{id}"), Authorize(Roles = "super, regular")]
         public async Task<ActionResult<FormSubmission>> GetFormSubmission(int id)
         {
-            var formSubmission = await _context.FormSubmissions.FindAsync(id);
+            var formSubmission = await _formSubRepo.GetForm(id);
 
             if (formSubmission == null)
             {
@@ -57,7 +60,7 @@ namespace GuestSystemBack.Controllers
         [HttpPatch("{id}"), Authorize(Roles = "super, regular")]
         public async Task<IActionResult> PatchFormSubmission(int id, FormSubmissionDTO request)
         {
-            var oldSubmission = await _context.FormSubmissions.FindAsync(id);
+            var oldSubmission = await _formSubRepo.GetForm(id);
             string errors = "";
             if (oldSubmission == null) return NotFound("Form submission with given ID does not exist");
 
@@ -68,7 +71,7 @@ namespace GuestSystemBack.Controllers
             if (request.DepartureTime != null) oldSubmission.DepartureTime = (DateTime)request.DepartureTime;
             if (request.VisiteeId != -1)
             {
-                var updatedVisitee = await _context.VisitableEmployees.FindAsync(request.VisiteeId);
+                var updatedVisitee = await _employeeRepo.GetEmployee(request.VisiteeId);
                 if (updatedVisitee != null)
                 {
                     oldSubmission.Visitee = updatedVisitee;
@@ -76,7 +79,7 @@ namespace GuestSystemBack.Controllers
                 }
                 else
                 {
-                    errors += "Failed to update visitee, object with given ID not found";
+                    errors += "Failed to update visitee, object with given ID not found.";
                 }
             }
             if (request.WifiAccessStatus == "granted") 
@@ -86,24 +89,24 @@ namespace GuestSystemBack.Controllers
                 oldSubmission.WifiAccessStatus = "granted";
             }
 
-            await _context.SaveChangesAsync();
+            await _formSubRepo.UpdateForm(oldSubmission);
 
-            return Ok( new{ errors, oldSubmission } );
+            return Ok( "Updated successfully. " + errors );
         }
 
         [HttpPatch("{id}/EndVisit")]
         public async Task<IActionResult> UpdateFormSubmissionDepartureTime(int id)
         {
-            if (_context.FormSubmissions == null)
+            if (!_formSubRepo.FormsExist())
             {
                 return Problem("Entity set 'DataContext.FormSubmissions'  is null.");
             }
 
-            var formSub = await _context.FormSubmissions.FindAsync(id);
+            var formSub = await _formSubRepo.GetForm(id);
             if (formSub == null) return NotFound("Form submission with given ID does not exist");
 
             formSub.DepartureTime = DateTime.Now;
-            await _context.SaveChangesAsync();
+            await _formSubRepo.UpdateForm(formSub);
 
             return Ok("Departure time updated successfully");
         }
@@ -113,12 +116,12 @@ namespace GuestSystemBack.Controllers
         [HttpPost]
         public async Task<ActionResult<FormSubmission>> PostFormSubmission(FormSubmissionDTO request)
         {
-            if (_context.FormSubmissions == null)
+            if (!_formSubRepo.FormsExist())
             {
                 return Problem("Entity set 'DataContext.FormSubmissions'  is null.");
             }
 
-            var submissionVisitee = await _context.VisitableEmployees.FindAsync(request.VisiteeId);
+            var submissionVisitee = await _employeeRepo.GetEmployee(request.VisiteeId);
             if (submissionVisitee == null) return NotFound("Visitee with given ID does not exist");
 
             //Send notification email to VisitableEmployee
@@ -156,20 +159,8 @@ namespace GuestSystemBack.Controllers
                 Visitee = submissionVisitee,
                 WifiAccessStatus = request.WifiAccessStatus
             };
-            _context.FormSubmissions.Add(newSubmission);
-            await _context.SaveChangesAsync();
-
-            foreach (ExtraDocument doc in _context.ExtraDocuments)
-            {
-                _context.FormDocuments.Add(new()
-                {
-                    FormId = newSubmission.Id,
-                    Form = newSubmission,
-                    DocumentId = doc.Id,
-                    Document = doc
-                });
-            }
-            await _context.SaveChangesAsync();
+            await _formSubRepo.AddForm(newSubmission);
+            await _formSubRepo.AddDocumentsToForm(newSubmission);
 
             return CreatedAtAction("GetFormSubmission", new { id = newSubmission.Id }, newSubmission);
         }
@@ -178,41 +169,16 @@ namespace GuestSystemBack.Controllers
         [HttpDelete("{id}"), Authorize(Roles = "super")]
         public async Task<IActionResult> DeleteFormSubmission(int id)
         {
-            var formSubmission = await _context.FormSubmissions.FindAsync(id);
+            var formSubmission = await _formSubRepo.GetForm(id);
             if (formSubmission == null)
             {
-                return NotFound();
+                return NotFound("Form submission with given ID does not exist");
             }
 
-            foreach(FormDocument formDoc in _context.FormDocuments)
-            {
-                if(formDoc.FormId == id)
-                {
-                    _context.FormDocuments.Remove(formDoc);
-                }
-            }
-            _context.FormSubmissions.Remove(formSubmission);
-            await _context.SaveChangesAsync();
+            await _formSubRepo.RemoveDocumentsFromForm(id);
+            await _formSubRepo.DeleteForm(formSubmission);
 
             return NoContent();
         }
-        /*
-        private void SendEmail(string recipientAddress, string emailSubject, string emailBody)
-        {
-            var email = new MimeMessage();
-            email.From.Add(MailboxAddress.Parse("guestservice@something.com"));
-            email.To.Add(MailboxAddress.Parse(recipientAddress));
-            email.Subject = emailSubject;
-            email.Body = new TextPart(TextFormat.Html) { Text = emailBody };
-
-            using var smtp = new SmtpClient();
-            smtp.Connect(_configuration.GetSection("AppSettings:EmailHost").Value,
-                int.Parse(_configuration.GetSection("AppSettings:EmailPort").Value),
-                MailKit.Security.SecureSocketOptions.StartTls);
-            smtp.Authenticate(_configuration.GetSection("AppSettings:EmailUsername").Value,
-                _configuration.GetSection("AppSettings:EmailPassword").Value);
-            smtp.Send(email);
-            smtp.Disconnect(true);
-        }*/
     }
 }

@@ -22,7 +22,10 @@ builder.Services.AddControllers();
 builder.Services.AddScoped<IVisitableEmployeeRepo, VisitableEmployeeRepo>();
 builder.Services.AddScoped<IFormSubmissionRepo, FormSubmissionRepo>();
 builder.Services.AddScoped<IExtraDocumentRepo, ExtraDocumentRepo>();
+builder.Services.AddScoped<IAdminRepo, AdminRepo>();
+builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddHttpContextAccessor();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
