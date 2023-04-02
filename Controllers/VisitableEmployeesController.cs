@@ -57,6 +57,7 @@ namespace GuestSystemBack.Controllers
 
             if (request.Name != String.Empty) oldEmployee.Name = request.Name;
             if (request.Email != String.Empty) oldEmployee.Email = request.Email;
+            if (request.Status != String.Empty) oldEmployee.Status = request.Status;
             await _employeeRepo.UpdateEmployee(oldEmployee);
 
             return Ok(oldEmployee);
@@ -72,8 +73,8 @@ namespace GuestSystemBack.Controllers
                 return Problem("Entity set 'DataContext.VisitableEmployees'  is null.");
             }
 
-            if(_employeeRepo.EmployeeWithEmailExists(request.Email))
-                return BadRequest("Employee with this email already exists");
+            /*if(_employeeRepo.EmployeeWithEmailExists(request.Email))
+                return BadRequest("Employee with this email already exists");*/
 
             VisitableEmployee newEmployee = new()
             {

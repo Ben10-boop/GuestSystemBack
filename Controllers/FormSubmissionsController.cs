@@ -82,9 +82,21 @@ namespace GuestSystemBack.Controllers
                     errors += "Failed to update visitee, object with given ID not found.";
                 }
             }
-            if (request.WifiAccessStatus == "granted") 
+            if (request.WifiAccessStatus == "granted" && oldSubmission.WifiAccessStatus == "not requested") 
             {
-                //grant Wifi access
+                if (request.Email == null)
+                {
+                    return BadRequest("Visit registration failed! Email address is required to gain Wifi access");
+                }
+
+                //grant Wifi access (To Be Implemented)
+                string wifiCredentials = "credentials, yeah.";
+
+                //Send Wifi credential email to form submitter
+                _emailService.SendEmail(request.Email, "Your office guest WiFi credentials",
+                    $"Hello {request.Name},<br> <br> Here are your guest wifi network credentials: " +
+                    wifiCredentials + "<br> <br>" +
+                    "Kind regards, <br> Guest entrance system");
 
                 oldSubmission.WifiAccessStatus = "granted";
             }
@@ -134,17 +146,17 @@ namespace GuestSystemBack.Controllers
             {
                 if(request.Email == null)
                 {
-                    return BadRequest("Visit registration failed! Email is required to gain Wifi access");
+                    return BadRequest("Visit registration failed! Email address is required to gain Wifi access");
                 }
 
-                //grant Wifi access
+                //grant Wifi access (To Be Implemented)
                 string wifiCredentials = "credentials, yeah.";
 
                 //Send Wifi credential email to form submitter
-                _emailService.SendEmail(request.Email, "Yuor office guest WiFi credentials",
-                $"Hello {request.Name},<br> <br> Here are your guest wifi network credentials: " +
-                wifiCredentials + "<br> <br>" +
-                "Kind regards, <br> Guest entrance system");
+                _emailService.SendEmail(request.Email, "Your office guest WiFi credentials",
+                    $"Hello {request.Name},<br> <br> Here are your guest wifi network credentials: " +
+                    wifiCredentials + "<br> <br>" +
+                    "Kind regards, <br> Guest entrance system");
             }
 
             FormSubmission newSubmission = new()
@@ -160,9 +172,19 @@ namespace GuestSystemBack.Controllers
                 WifiAccessStatus = request.WifiAccessStatus
             };
             await _formSubRepo.AddForm(newSubmission);
-            await _formSubRepo.AddDocumentsToForm(newSubmission);
+
+            if (request.Signature != String.Empty && request.Signature != null) 
+            {
+                await _formSubRepo.AddDocumentsToForm(newSubmission);
+            }
 
             return CreatedAtAction("GetFormSubmission", new { id = newSubmission.Id }, newSubmission);
+        }
+
+        [HttpGet("{id}/Documents")]
+        public async Task<ActionResult<IEnumerable<ExtraDocument>>> GetFormSubmissionDocuments(int id)
+        {
+            return await _formSubRepo.GetFormDocuments(id);
         }
 
         // DELETE: api/FormSubmissions/5

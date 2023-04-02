@@ -26,7 +26,7 @@ namespace GuestSystemBack.Repositories
 
         public bool DocumentsExist()
         {
-            return _context.ExtraDocuments == null;
+            return _context.ExtraDocuments != null;
         }
 
         public async Task<ExtraDocument?> GetDocument(int id)
@@ -37,6 +37,11 @@ namespace GuestSystemBack.Repositories
         public async Task<List<ExtraDocument>> GetDocuments()
         {
             return await _context.ExtraDocuments.ToListAsync();
+        }
+
+        public async Task<List<ExtraDocument>> GetActiveDocuments()
+        {
+            return await _context.ExtraDocuments.Where(doc => doc.Status == "active").ToListAsync();
         }
 
         public bool HasBeenSigned(int id)

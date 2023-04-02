@@ -28,7 +28,7 @@ namespace GuestSystemBack.Repositories
 
         public bool FormsExist()
         {
-            return _context.FormSubmissions == null;
+            return _context.FormSubmissions != null;
         }
 
         public async Task<FormSubmission?> GetForm(int id)
@@ -51,13 +51,16 @@ namespace GuestSystemBack.Repositories
         {
             foreach (ExtraDocument doc in _context.ExtraDocuments)
             {
-                _context.FormDocuments.Add(new()
+                if (doc.Status == "active")
                 {
-                    FormId = formSub.Id,
-                    Form = formSub,
-                    DocumentId = doc.Id,
-                    Document = doc
-                });
+                    _context.FormDocuments.Add(new()
+                    {
+                        FormId = formSub.Id,
+                        Form = formSub,
+                        DocumentId = doc.Id,
+                        Document = doc
+                    });
+                }
             }
             return _context.SaveChangesAsync();
         }
@@ -72,6 +75,17 @@ namespace GuestSystemBack.Repositories
                 }
             }
             return _context.SaveChangesAsync();
+        }
+
+        public async Task<List<ExtraDocument>> GetFormDocuments(int formSubId)
+        {
+            var formDocs = await _context.FormDocuments.Where(o => o.FormId == formSubId).Include(o => o.Document).ToListAsync();
+            List<ExtraDocument> result = new List<ExtraDocument>();
+            foreach (var formDoc in formDocs)
+            {
+                result.Add(formDoc.Document);
+            }
+            return result;
         }
     }
 }

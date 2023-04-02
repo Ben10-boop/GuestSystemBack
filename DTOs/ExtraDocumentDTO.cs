@@ -10,7 +10,7 @@ namespace GuestSystemBack.DTOs
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
-            if(Status != "active" && Status != "inactive" && Status != "removed")
+            if(Status != "active" && Status != "inactive" && Status != "removed" && Status != "")
             {
                 yield return new ValidationResult($"Value:'{Status}' for Status is not allowed.");
             }

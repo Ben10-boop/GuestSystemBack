@@ -32,6 +32,12 @@ namespace GuestSystemBack.Controllers
             return await _documentRepo.GetDocuments();
         }
 
+        [HttpGet("Active")]
+        public async Task<ActionResult<IEnumerable<ExtraDocument>>> GetActiveExtraDocuments()
+        {
+            return await _documentRepo.GetActiveDocuments();
+        }
+
         // GET: api/Documents/5
         [HttpGet("{id}")]
         public async Task<ActionResult<ExtraDocument>> GetExtraDocument(int id)
@@ -72,6 +78,11 @@ namespace GuestSystemBack.Controllers
                 return Problem("Entity set 'DataContext.ExtraDocuments'  is null.");
             }
 
+            if (request.Content == String.Empty)
+            {
+                return BadRequest("There was no file attached");
+            }
+            
             ExtraDocument newDocument = new()
             {
                 Title = request.Title,
@@ -95,7 +106,7 @@ namespace GuestSystemBack.Controllers
 
             if (_documentRepo.HasBeenSigned(id))
             {
-                extraDocument.Status = "inactive";
+                extraDocument.Status = "removed";
                 return Ok(extraDocument);
             }
             await _documentRepo.DeleteDocument(extraDocument);

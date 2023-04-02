@@ -22,7 +22,7 @@ namespace GuestSystemBack.Repositories
 
         public bool AdminsExist()
         {
-            return _context.Admins == null;
+            return _context.Admins != null;
         }
 
         public async Task<Admin?> GetAdmin(int id)

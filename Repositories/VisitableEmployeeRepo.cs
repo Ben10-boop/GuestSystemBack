@@ -39,7 +39,7 @@ namespace GuestSystemBack.Repositories
 
         public bool EmployeesExist()
         {
-            return _context.VisitableEmployees == null;
+            return _context.VisitableEmployees != null;
         }
 
         public async Task<VisitableEmployee?> GetEmployee(int id)

@@ -52,7 +52,7 @@ namespace GuestSystemBack.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Admins");
+                    b.ToTable("Admins", (string)null);
                 });
 
             modelBuilder.Entity("GuestSystemBack.Models.ExtraDocument", b =>
@@ -77,7 +77,7 @@ namespace GuestSystemBack.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ExtraDocuments");
+                    b.ToTable("ExtraDocuments", (string)null);
                 });
 
             modelBuilder.Entity("GuestSystemBack.Models.FormDocument", b =>
@@ -100,7 +100,7 @@ namespace GuestSystemBack.Migrations
 
                     b.HasIndex("FormId");
 
-                    b.ToTable("FormDocuments");
+                    b.ToTable("FormDocuments", (string)null);
                 });
 
             modelBuilder.Entity("GuestSystemBack.Models.FormSubmission", b =>
@@ -142,7 +142,7 @@ namespace GuestSystemBack.Migrations
 
                     b.HasIndex("VisiteeId");
 
-                    b.ToTable("FormSubmissions");
+                    b.ToTable("FormSubmissions", (string)null);
                 });
 
             modelBuilder.Entity("GuestSystemBack.Models.VisitableEmployee", b =>
@@ -167,7 +167,7 @@ namespace GuestSystemBack.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("VisitableEmployees");
+                    b.ToTable("VisitableEmployees", (string)null);
                 });
 
             modelBuilder.Entity("GuestSystemBack.Models.FormDocument", b =>

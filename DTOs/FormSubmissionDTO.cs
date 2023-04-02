@@ -1,5 +1,6 @@
 ﻿using GuestSystemBack.Models;
 using System.ComponentModel.DataAnnotations;
+using System.Text.RegularExpressions;
 
 namespace GuestSystemBack.DTOs
 {
@@ -17,9 +18,14 @@ namespace GuestSystemBack.DTOs
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
-            if (WifiAccessStatus != "not requested" && WifiAccessStatus != "granted")
+            if (WifiAccessStatus != "not requested" && WifiAccessStatus != "granted" && WifiAccessStatus != "")
             {
                 yield return new ValidationResult($"Value:'{WifiAccessStatus}' for WifiAccessStatus is not allowed.");
+            }
+            Regex rg = new Regex(@"^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+$");
+            if (Email != String.Empty && Email != null && !rg.IsMatch(Email))
+            {
+                yield return new ValidationResult($"Value:'{Email}' is not a proper email address");
             }
         }
     }

@@ -22,6 +22,7 @@ namespace GuestSystemBack.Services
             email.Body = new TextPart(TextFormat.Html) { Text = emailBody };
 
             using var smtp = new SmtpClient();
+            smtp.CheckCertificateRevocation = false;
             smtp.Connect(_configuration.GetSection("AppSettings:EmailHost").Value,
                 int.Parse(_configuration.GetSection("AppSettings:EmailPort").Value),
                 MailKit.Security.SecureSocketOptions.StartTls);
