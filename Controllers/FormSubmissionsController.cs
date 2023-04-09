@@ -25,13 +25,15 @@ namespace GuestSystemBack.Controllers
         private readonly IFormSubmissionRepo _formSubRepo;
         private readonly IVisitableEmployeeRepo _employeeRepo;
         private readonly IEmailService _emailService;
+        private readonly ICiscoApiService _ciscoApiService;
 
-        public FormSubmissionsController(IEmailService emailService,
-            IFormSubmissionRepo formSubRepo, IVisitableEmployeeRepo employeeRepo)
+        public FormSubmissionsController(IEmailService emailService, IFormSubmissionRepo formSubRepo,
+            IVisitableEmployeeRepo employeeRepo, ICiscoApiService ciscoApiService)
         {
             _emailService = emailService;
             _formSubRepo = formSubRepo;
             _employeeRepo = employeeRepo;
+            _ciscoApiService = ciscoApiService;
         }
 
         // GET: api/FormSubmissions
@@ -201,6 +203,41 @@ namespace GuestSystemBack.Controllers
             await _formSubRepo.DeleteForm(formSubmission);
 
             return NoContent();
+        }
+
+        [HttpGet("ActiveGuests"), Authorize(Roles = "super, regular")]
+        public async Task<ActionResult<IEnumerable<GuestUser>>> GetActiveGuests()
+        {
+            /*
+            _ciscoApiService.PostWifiUser(new()
+            {
+                GuestUser = new GuestUser
+                {
+                    name = "BensTestUser",
+                    guestType = "Contractor (default)",
+                    guestInfo = new GuestInfo
+                    {
+                        password = "aaa111222333"
+                    },
+                    guestAccessInfo = new GuestAccessInfo
+                    {
+                        validDays = 1
+                    },
+                    portalId = "f10871e0-7159-11e7-a355-005056aba474"
+                }
+            });*/
+            return Ok(_ciscoApiService.GetCurrentWifiUsers());
+        }
+
+        [HttpGet("Active"), Authorize(Roles = "super, regular")]
+        public async Task<ActionResult<IEnumerable<FormSubmission>>> GetActiveForms()
+        {
+            return await _formSubRepo.GetActiveForms();
+        }
+        [HttpGet("Recent")]
+        public async Task<ActionResult<IEnumerable<FormSubmission>>> GetRecentForms()
+        {
+            return await _formSubRepo.GetRecentForms();
         }
     }
 }

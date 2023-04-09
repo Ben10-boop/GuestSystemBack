@@ -53,7 +53,8 @@ namespace GuestSystemBack.Controllers
             {
                 new Claim(ClaimTypes.Email, admin.Email),
                 new Claim(ClaimTypes.Name, $"{admin.Id}"),
-                new Claim(ClaimTypes.Role, admin.Role)
+                new Claim(ClaimTypes.Role, admin.Role),
+                new Claim(ClaimTypes.Expiration, new DateTimeOffset(DateTime.Now.AddHours(2)).ToUnixTimeMilliseconds().ToString())
             };
 
             var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(

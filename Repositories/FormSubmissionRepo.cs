@@ -87,5 +87,15 @@ namespace GuestSystemBack.Repositories
             }
             return result;
         }
+
+        public async Task<List<FormSubmission>> GetActiveForms()
+        {
+            return await _context.FormSubmissions.Where(o => o.DepartureTime > DateTime.Now).ToListAsync();
+        }
+
+        public async Task<List<FormSubmission>> GetRecentForms()
+        {
+            return await _context.FormSubmissions.Where(o => o.EntranceTime > DateTime.Now.AddDays(-1)).ToListAsync();
+        }
     }
 }

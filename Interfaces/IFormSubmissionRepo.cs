@@ -13,5 +13,7 @@ namespace GuestSystemBack.Interfaces
         public Task<int> AddDocumentsToForm(FormSubmission formSub);
         public Task<int> RemoveDocumentsFromForm(int formSubId);
         public Task<List<ExtraDocument>> GetFormDocuments(int formSubId);
+        public Task<List<FormSubmission>> GetActiveForms();
+        public Task<List<FormSubmission>> GetRecentForms();
     }
 }
