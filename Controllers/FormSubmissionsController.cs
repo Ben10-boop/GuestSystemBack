@@ -229,15 +229,30 @@ namespace GuestSystemBack.Controllers
             return Ok(_ciscoApiService.GetCurrentWifiUsers());
         }
 
+        [HttpGet("Recent")]
+        public async Task<ActionResult<IEnumerable<FormSubmission>>> GetRecentForms()
+        {
+            return await _formSubRepo.GetRecentForms();
+        }
+
         [HttpGet("Active"), Authorize(Roles = "super, regular")]
         public async Task<ActionResult<IEnumerable<FormSubmission>>> GetActiveForms()
         {
             return await _formSubRepo.GetActiveForms();
         }
-        [HttpGet("Recent")]
-        public async Task<ActionResult<IEnumerable<FormSubmission>>> GetRecentForms()
+
+        [HttpPost("Active/Alarm"), Authorize(Roles = "super, regular")]
+        public async Task<IActionResult> SendAlarmEmails(AlarmEmailDTO request)
         {
-            return await _formSubRepo.GetRecentForms();
+            foreach(FormSubmission activeGuest in await _formSubRepo.GetActiveForms())
+            {
+                if(activeGuest.Email != null && activeGuest.Email != String.Empty)
+                {
+                    _emailService.SendEmail(activeGuest.Email, "Alarm!",
+                    request.Message + "<br> <br>" + "Kind regards, <br> Guest entrance system");
+                }
+            }
+            return Ok("Emails sent successfully");
         }
     }
 }

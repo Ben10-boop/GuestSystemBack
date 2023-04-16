@@ -49,6 +49,10 @@ namespace GuestSystemBack.Repositories
 
         public async Task<List<VisitableEmployee>> GetEmployees()
         {
+            return await _context.VisitableEmployees.Where(o => o.Status == "visitable").ToListAsync();
+        }
+        public async Task<List<VisitableEmployee>> GetAllEmployees()
+        {
             return await _context.VisitableEmployees.ToListAsync();
         }
 

@@ -37,10 +37,9 @@ namespace GuestSystemBack.Controllers
                     break;
                 }
             }
-            if(foundAdmin == null) return NotFound("Admin with the given email does not exist");
 
-            if (!VerifyPassWordHash(request.Password, foundAdmin.PasswordHash, foundAdmin.PasswordSalt))
-                return BadRequest("Wrong password");
+            if (foundAdmin == null || !VerifyPassWordHash(request.Password, foundAdmin.PasswordHash, foundAdmin.PasswordSalt))
+                return BadRequest("Wrong credentials");
 
             string token = CreateToken(foundAdmin);
 

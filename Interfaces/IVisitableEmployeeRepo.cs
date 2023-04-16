@@ -5,6 +5,7 @@ namespace GuestSystemBack.Interfaces
     public interface IVisitableEmployeeRepo
     {
         public Task<List<VisitableEmployee>> GetEmployees();
+        public Task<List<VisitableEmployee>> GetAllEmployees();
         public Task<VisitableEmployee?> GetEmployee(int id);
         public Task<int> AddEmployee(VisitableEmployee employee);
         public Task<int> UpdateEmployee(VisitableEmployee employee);

@@ -32,9 +32,14 @@ namespace GuestSystemBack.Controllers
         {
             return await _employeeRepo.GetEmployees();
         }
+        [HttpGet("All"), Authorize(Roles = "super, regular")]
+        public async Task<ActionResult<IEnumerable<VisitableEmployee>>> GetAllVisitableEmployees()
+        {
+            return await _employeeRepo.GetAllEmployees();
+        }
 
         // GET: api/VisitableEmployees/5
-        [HttpGet("{id}")]
+        [HttpGet("{id}"), Authorize(Roles = "super, regular")]
         public async Task<ActionResult<VisitableEmployee>> GetVisitableEmployee(int id)
         {
             var visitableEmployee = await _employeeRepo.GetEmployee(id);
