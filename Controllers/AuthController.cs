@@ -1,5 +1,6 @@
 ﻿using GuestSystemBack.Data;
 using GuestSystemBack.DTOs;
+using GuestSystemBack.Interfaces;
 using GuestSystemBack.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -15,21 +16,19 @@ namespace GuestSystemBack.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly GuestSystemContext _context;
+        private readonly IAdminRepo _adminRepo;
         private readonly IConfiguration _configuration;
-        public AuthController(GuestSystemContext context, IConfiguration configuration)
+        public AuthController(IAdminRepo adminRepo, IConfiguration configuration)
         {
-            _context = context;
+            _adminRepo = adminRepo;
             _configuration = configuration;
         }
 
         [HttpPost("login")]
         public async Task<ActionResult<string>> Login(AdminDTO request)
         {
-            if (_context.Admins == null) return NotFound("No admins exist");
-
             Admin foundAdmin = null;
-            foreach (var admin in _context.Admins)
+            foreach (var admin in await _adminRepo.GetAdmins())
             {
                 if(admin.Email == request.Email)
                 {

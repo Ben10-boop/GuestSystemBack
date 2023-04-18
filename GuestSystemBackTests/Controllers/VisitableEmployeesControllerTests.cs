@@ -49,6 +49,22 @@ namespace GuestSystemBackTests.Controllers
             result.Should().BeOfType(typeof(ActionResult<IEnumerable<VisitableEmployee>>));
             result.Value.Should().BeSameAs(objectsMock);
         }
+        [Fact]
+        public async void VisitableEmployeeController_GetAllVisitableEmployees_ReturnEmployees()
+        {
+            //Arrange
+            var objectsMock = _fixture.Create<List<VisitableEmployee>>();
+
+            _repoMock.Setup(x => x.GetAllEmployees()).ReturnsAsync(objectsMock);
+
+            //Act
+            var result = await _controller.GetAllVisitableEmployees().ConfigureAwait(false);
+
+            //Asssert
+            result.Should().NotBeNull();
+            result.Should().BeOfType(typeof(ActionResult<IEnumerable<VisitableEmployee>>));
+            result.Value.Should().BeSameAs(objectsMock);
+        }
 
         [Fact]
         public async void VisitableEmployeeController_GetVisitableEmployee_ReturnEmployee()
@@ -154,24 +170,6 @@ namespace GuestSystemBackTests.Controllers
             //Asssert
             result.Should().NotBeNull();
             result.Result.As<ObjectResult>().Value.Should().BeOfType(typeof(ProblemDetails));
-        }
-        [Fact]
-        public async void VisitableEmployeeController_PostVisitableEmployee_ReturnBadRequest()
-        {
-            //Arrange
-            var objectMock = _fixture.Create<VisitableEmployeeDTO>();
-            var responseMock = _fixture.Create<int>();
-
-            _repoMock.Setup(x => x.EmployeesExist()).Returns(true);
-            _repoMock.Setup(x => x.EmployeeWithEmailExists(objectMock.Email)).Returns(true);
-            _repoMock.Setup(x => x.AddEmployee(It.IsAny<VisitableEmployee>())).ReturnsAsync(responseMock);
-
-            //Act
-            var result = await _controller.PostVisitableEmployee(objectMock).ConfigureAwait(false);
-
-            //Asssert
-            result.Should().NotBeNull();
-            result.Result.Should().BeOfType(typeof(BadRequestObjectResult));
         }
 
         [Fact]

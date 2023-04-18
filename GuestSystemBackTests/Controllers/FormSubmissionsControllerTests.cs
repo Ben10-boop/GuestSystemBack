@@ -22,6 +22,7 @@ namespace GuestSystemBackTests.Controllers
         private readonly Mock<IFormSubmissionRepo> _formSubRepoMock;
         private readonly Mock<IVisitableEmployeeRepo> _employeeRepoMock;
         private readonly IEmailService _emailServiceMock;
+        private readonly ICiscoApiService _ciscoApiServiceMock;
         private readonly FormSubmissionsController _controller;
 
         public FormSubmissionsControllerTests()
@@ -32,7 +33,8 @@ namespace GuestSystemBackTests.Controllers
             _formSubRepoMock = _fixture.Freeze<Mock<IFormSubmissionRepo>>();
             _employeeRepoMock = _fixture.Freeze<Mock<IVisitableEmployeeRepo>>();
             _emailServiceMock = new EmailServiceMock();
-            _controller = new FormSubmissionsController(_emailServiceMock, _formSubRepoMock.Object, _employeeRepoMock.Object);
+            _ciscoApiServiceMock = new CiscoApiServiceMock();
+            _controller = new FormSubmissionsController(_emailServiceMock, _formSubRepoMock.Object, _employeeRepoMock.Object, _ciscoApiServiceMock);
         }
 
         [Fact]
@@ -50,6 +52,90 @@ namespace GuestSystemBackTests.Controllers
             result.Should().NotBeNull();
             result.Should().BeOfType(typeof(ActionResult<IEnumerable<FormSubmission>>));
             result.Value.Should().BeSameAs(objectsMock);
+        }
+
+        [Fact]
+        public async void FormSubmissionController_GetRecentForms_ReturnFormSubmissions()
+        {
+            //Arrange
+            var objectsMock = _fixture.Create<List<FormSubmission>>();
+
+            _formSubRepoMock.Setup(x => x.GetRecentForms()).ReturnsAsync(objectsMock);
+
+            //Act
+            var result = await _controller.GetRecentForms().ConfigureAwait(false);
+
+            //Asssert
+            result.Should().NotBeNull();
+            result.Should().BeOfType(typeof(ActionResult<IEnumerable<FormSubmission>>));
+            result.Value.Should().BeSameAs(objectsMock);
+        }
+
+        [Fact]
+        public async void FormSubmissionController_GetActiveForms_ReturnFormSubmissions()
+        {
+            //Arrange
+            var objectsMock = _fixture.Create<List<FormSubmission>>();
+
+            _formSubRepoMock.Setup(x => x.GetActiveForms()).ReturnsAsync(objectsMock);
+
+            //Act
+            var result = await _controller.GetActiveForms().ConfigureAwait(false);
+
+            //Asssert
+            result.Should().NotBeNull();
+            result.Should().BeOfType(typeof(ActionResult<IEnumerable<FormSubmission>>));
+            result.Value.Should().BeSameAs(objectsMock);
+        }
+
+        [Fact]
+        public async void FormSubmissionController_GetFormSubmissionDocuments_ReturnDocuments()
+        {
+            //Arrange
+            var objectsMock = _fixture.Create<List<ExtraDocument>>();
+
+            _formSubRepoMock.Setup(x => x.GetFormDocuments(1)).ReturnsAsync(objectsMock);
+
+            //Act
+            var result = await _controller.GetFormSubmissionDocuments(1).ConfigureAwait(false);
+
+            //Asssert
+            result.Should().NotBeNull();
+            result.Should().BeOfType(typeof(ActionResult<IEnumerable<ExtraDocument>>));
+            result.Value.Should().BeSameAs(objectsMock);
+        }
+
+        [Fact]
+        public async void FormSubmissionController_GetActiveGuests_ReturnGuests()
+        {
+            //Arrange
+
+            //Act
+            var result = await _controller.GetActiveGuests().ConfigureAwait(false);
+
+            //Asssert
+            result.Should().NotBeNull();
+            result.Should().BeOfType(typeof(ActionResult<IEnumerable<GuestUser>>));
+        }
+
+        [Fact]
+        public async void FormSubmissionController_SendAlarmEmails_ReturnOk()
+        {
+            //Arrange
+            var objectsMock = _fixture.Create<List<FormSubmission>>();
+            _formSubRepoMock.Setup(x => x.GetActiveForms()).ReturnsAsync(objectsMock);
+
+            AlarmEmailDTO objectMock = new()
+            {
+                Message = "Test"
+            };
+
+            //Act
+            var result = await _controller.SendAlarmEmails(objectMock).ConfigureAwait(false);
+
+            //Asssert
+            result.Should().NotBeNull();
+            result.Should().BeOfType(typeof(OkObjectResult));
         }
 
         [Fact]
