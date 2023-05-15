@@ -312,6 +312,27 @@ namespace GuestSystemBackTests.Controllers
             result.Should().NotBeNull();
             result.Result.Should().BeOfType(typeof(CreatedAtActionResult));
         }
+        [Fact]
+        public async void FormSubmissionController_PostFormSubmission_ReturnProblem()
+        {
+            //Arrange
+            var objectDtoMock = _fixture.Create<FormSubmissionDTO>();
+            objectDtoMock.WifiAccessStatus = "granted";
+            var updatedVisiteeMock = _fixture.Create<VisitableEmployee>();
+            var responseMock = _fixture.Create<int>();
+
+            _formSubRepoMock.Setup(x => x.FormsExist()).Returns(false);
+            _employeeRepoMock.Setup(x => x.GetEmployee(objectDtoMock.VisiteeId)).ReturnsAsync(updatedVisiteeMock);
+            _formSubRepoMock.Setup(x => x.AddForm(It.IsAny<FormSubmission>())).ReturnsAsync(responseMock);
+            _formSubRepoMock.Setup(x => x.AddDocumentsToForm(It.IsAny<FormSubmission>())).ReturnsAsync(responseMock);
+
+            //Act
+            var result = await _controller.PostFormSubmission(objectDtoMock).ConfigureAwait(false);
+
+            //Asssert
+            result.Should().NotBeNull();
+            result.Result.As<ObjectResult>().Value.Should().BeOfType(typeof(ProblemDetails));
+        }
 
         [Fact]
         public async void FormSubmissionController_PostFormSubmission_ReturnNotFound()

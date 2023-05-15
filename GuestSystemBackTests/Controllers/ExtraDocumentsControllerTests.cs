@@ -45,6 +45,22 @@ namespace GuestSystemBackTests.Controllers
             result.Value.Should().BeSameAs(documentsMock);
         }
         [Fact]
+        public async void DocumentsController_GetActiveDocuments_ReturnDocuments()
+        {
+            //Arrange
+            var documentsMock = _fixture.Create<List<ExtraDocument>>();
+
+            _repoMock.Setup(x => x.GetActiveDocuments()).ReturnsAsync(documentsMock);
+
+            //Act
+            var result = await _controller.GetActiveExtraDocuments().ConfigureAwait(false);
+
+            //Asssert
+            result.Should().NotBeNull();
+            result.Should().BeOfType(typeof(ActionResult<IEnumerable<ExtraDocument>>));
+            result.Value.Should().BeSameAs(documentsMock);
+        }
+        [Fact]
         public async void DocumentsController_GetDocument_ReturnDocument()
         {
             //Arrange

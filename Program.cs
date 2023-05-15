@@ -25,7 +25,7 @@ builder.Services.AddScoped<IExtraDocumentRepo, ExtraDocumentRepo>();
 builder.Services.AddScoped<IAdminRepo, AdminRepo>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
-builder.Services.AddScoped<ICiscoApiService, CiscoApiService>();
+builder.Services.AddScoped<ICiscoApiService, CiscoApiServiceMock>();
 builder.Services.AddHttpContextAccessor();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

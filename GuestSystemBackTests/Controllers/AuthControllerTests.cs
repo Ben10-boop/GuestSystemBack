@@ -35,7 +35,7 @@ namespace GuestSystemBackTests.Controllers
         }
 
         [Fact]
-        public async void AdminsController_GetAdmins_ReturnAdmins()
+        public async void AuthController_Login_ReturnOk()
         {
             //Arrange
             string password = "mytestpassword123.";
@@ -77,7 +77,7 @@ namespace GuestSystemBackTests.Controllers
         }
 
         [Fact]
-        public async void AdminsController_GetAdmins_ReturnBadRequestBecauseEmail()
+        public async void AuthController_Login_ReturnBadRequestBecauseEmail()
         {
             //Arrange
             string password = "mytestpassword123.";
@@ -119,7 +119,7 @@ namespace GuestSystemBackTests.Controllers
         }
 
         [Fact]
-        public async void AdminsController_GetAdmins_ReturnBadRequestBecausePassword()
+        public async void AuthController_Login_ReturnBadRequestBecausePassword()
         {
             //Arrange
             string password = "mytestpassword123.";

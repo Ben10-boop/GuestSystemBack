@@ -107,6 +107,7 @@ namespace GuestSystemBack.Controllers
             if (_documentRepo.HasBeenSigned(id))
             {
                 extraDocument.Status = "removed";
+                await _documentRepo.UpdateDocument(extraDocument);
                 return Ok(extraDocument);
             }
             await _documentRepo.DeleteDocument(extraDocument);
